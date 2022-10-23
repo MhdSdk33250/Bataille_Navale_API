@@ -6,8 +6,13 @@ use App\Repository\PlayerRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\HttpFoundation\File\File;
+use Vich\UploaderBundle\Mapping\Annotation\UploadableField;
 
 #[ORM\Entity(repositoryClass: PlayerRepository::class)]
+/**
+ * @Uploadable()
+ */
 class Player implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
@@ -27,6 +32,16 @@ class Player implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private ?string $password = null;
 
+
+    /**
+     * 
+     * @var $imageFile|null
+     * @UploadableField(mapping="images", fileNameProperty="realPath")
+     */
+    private $imageFile;
+
+    #[ORM\Column(type: 'string')]
+    private ?string $image = null;
     public function getId(): ?int
     {
         return $this->id;
@@ -86,6 +101,27 @@ class Player implements UserInterface, PasswordAuthenticatedUserInterface
         $this->password = $password;
 
         return $this;
+    }
+
+    public function setImageFile(?File $imageFile = null): ?Player
+    {
+        $this->imageFile = $imageFile;
+        return $this;
+    }
+
+    public function getImageFile(): ?File
+    {
+        return $this->imageFile;
+    }
+
+    public function setImage($image): void
+    {
+        $this->image = $image;
+    }
+
+    public function getImage(): ?string
+    {
+        return $this->image;
     }
 
     /**
