@@ -80,7 +80,7 @@ class PlayerController extends AbstractController
     /**
      * Register new player
      */
-    #[Route('/register', name: 'player.create', methods: ['POST'])]
+    #[Route('/api/register', name: 'player.create', methods: ['POST'])]
     public function createPlayer(Request $request, SerializerInterface $serializer, UrlGeneratorInterface $urlGenerator, UserPasswordHasherInterface $passwordHasher): JsonResponse
     {
 
