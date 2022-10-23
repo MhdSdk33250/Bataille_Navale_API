@@ -4,6 +4,8 @@ namespace App\Controller;
 
 use App\Entity\Player;
 use App\Repository\PlayerRepository;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\HttpFoundation\Request;
@@ -16,6 +18,8 @@ use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\Security\Http\Attribute\CurrentUser;
+use App\Service\UploadService;
 
 class PlayerController extends AbstractController
 {
@@ -100,6 +104,27 @@ class PlayerController extends AbstractController
         $this->em->flush();
         $jsonPlayer = $serializer->serialize($player, 'json');
         $location = $urlGenerator->generate('player.get', ['idPlayer' => $player->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
+        return new JsonResponse($jsonPlayer, Response::HTTP_CREATED, ["Location" => $location], true);
+    }
+    /**
+     * Register new player
+     */
+    #[Route('/api/player/uploadpic', name: 'player.uploadpic', methods: ['POST'])]
+    public function uploadpic(UploadService $uploader, ParameterBagInterface $parameterBag, ManagerRegistry $doctrine, Request $request, SerializerInterface $serializer, UrlGeneratorInterface $urlGenerator, UserPasswordHasherInterface $passwordHasher): JsonResponse
+    {
+        $playerId = $this->getUser()->getId();
+
+        $playerRepository = $doctrine->getRepository(Player::class);
+        $currentPlayer = $playerRepository->find($playerId);
+        $receivedFile = $request->files->get('image');
+        $uploader->upload('images/players-images', $receivedFile, "test.png");
+        die;
+        $currentPlayer->setImageFile($receivedFile);
+
+        $this->em->persist($currentPlayer);
+        $this->em->flush();
+        $jsonPlayer = $serializer->serialize($currentPlayer, 'json');
+        $location = $urlGenerator->generate('player.get', ['idPlayer' => $currentPlayer->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
         return new JsonResponse($jsonPlayer, Response::HTTP_CREATED, ["Location" => $location], true);
     }
 }
