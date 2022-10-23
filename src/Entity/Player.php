@@ -27,10 +27,6 @@ class Player implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private ?string $password = null;
 
-    #[ORM\ManyToOne(inversedBy: 'players')]
-    #[ORM\JoinColumn(nullable: false)]
-    private ?game $game = null;
-
     public function getId(): ?int
     {
         return $this->id;
@@ -99,17 +95,5 @@ class Player implements UserInterface, PasswordAuthenticatedUserInterface
     {
         // If you store any temporary, sensitive data on the user, clear it here
         // $this->plainPassword = null;
-    }
-
-    public function getGame(): ?game
-    {
-        return $this->game;
-    }
-
-    public function setGame(?game $game): self
-    {
-        $this->game = $game;
-
-        return $this;
     }
 }
