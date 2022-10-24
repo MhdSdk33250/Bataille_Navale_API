@@ -10,9 +10,6 @@ use Symfony\Component\HttpFoundation\File\File;
 use Vich\UploaderBundle\Mapping\Annotation\UploadableField;
 
 #[ORM\Entity(repositoryClass: PlayerRepository::class)]
-/**
- * @Uploadable()
- */
 class Player implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
@@ -33,15 +30,13 @@ class Player implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $password = null;
 
 
-    /**
-     * 
-     * @var $imageFile|null
-     * @UploadableField(mapping="images", fileNameProperty="realPath")
-     */
+    #[ORM\Column()]
     private $imageFile;
 
-    #[ORM\Column(type: 'string')]
-    private ?string $image = null;
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $imagePath;
+
+
     public function getId(): ?int
     {
         return $this->id;
@@ -103,25 +98,15 @@ class Player implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function setImageFile(?File $imageFile = null): ?Player
+    public function setImageFile(?String $imageFile = null): ?Player
     {
         $this->imageFile = $imageFile;
         return $this;
     }
 
-    public function getImageFile(): ?File
+    public function getImageFile(): ?String
     {
         return $this->imageFile;
-    }
-
-    public function setImage($image): void
-    {
-        $this->image = $image;
-    }
-
-    public function getImage(): ?string
-    {
-        return $this->image;
     }
 
     /**
@@ -131,5 +116,17 @@ class Player implements UserInterface, PasswordAuthenticatedUserInterface
     {
         // If you store any temporary, sensitive data on the user, clear it here
         // $this->plainPassword = null;
+    }
+
+    public function getImagePath(): ?string
+    {
+        return $this->imagePath;
+    }
+
+    public function setImagePath(?string $imagePath): self
+    {
+        $this->imagePath = $imagePath;
+
+        return $this;
     }
 }

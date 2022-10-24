@@ -3,9 +3,8 @@
 namespace App\Controller;
 
 use App\Entity\Player;
+use App\Service\UploadService;
 use App\Repository\PlayerRepository;
-use Symfony\Component\HttpFoundation\File\UploadedFile;
-use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\HttpFoundation\Request;
@@ -13,13 +12,16 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
-use Symfony\Component\Security\Http\Attribute\CurrentUser;
-use App\Service\UploadService;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 
 class PlayerController extends AbstractController
 {
@@ -117,14 +119,38 @@ class PlayerController extends AbstractController
         $playerRepository = $doctrine->getRepository(Player::class);
         $currentPlayer = $playerRepository->find($playerId);
         $receivedFile = $request->files->get('image');
-        $uploader->upload('images/players-images', $receivedFile, "test.png");
-        die;
-        $currentPlayer->setImageFile($receivedFile);
-
+        $imagePath = $uploader->upload('images/players-images', $receivedFile);
+        $imageUrl = $urlGenerator->generate('picture', ['idPlayer' => $currentPlayer->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
+        $currentPlayer->setImageFile($imageUrl);
+        $currentPlayer->setImagePath($imagePath);
         $this->em->persist($currentPlayer);
         $this->em->flush();
-        $jsonPlayer = $serializer->serialize($currentPlayer, 'json');
-        $location = $urlGenerator->generate('player.get', ['idPlayer' => $currentPlayer->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
-        return new JsonResponse($jsonPlayer, Response::HTTP_CREATED, ["Location" => $location], true);
+        $jsonResponse = $this->json([
+            'message' => 'Player picture updated',
+        ]);
+        $location = $urlGenerator->generate('picture', ['idPlayer' => $currentPlayer->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
+        return new JsonResponse($jsonResponse, Response::HTTP_CREATED, ["Location" => $location], true);
+    }
+    /**
+     * Get player profile picture
+     */
+    #[Route('/api/player/picture/{idPlayer}', name: 'picture', methods: ['GET'])]
+    #[ParamConverter("player", options: ["id" => "idPlayer"], class: 'App\Entity\Player')]
+    public function getPicture(Request $request, Player $player)
+    {
+
+        $filePath = $player->getImagePath();
+
+      if(file_exists($filePath)){
+        $response = new Response();
+        $disposition = $response->headers->makeDisposition(ResponseHeaderBag::DISPOSITION_INLINE, "image");
+        $response->headers->set('Content-Disposition', $disposition);
+        $response->headers->set('Content-Type', 'image/png');
+        $response->setContent(file_get_contents($filePath));
+        return $response;
+      }
+      else{
+        return $this->redirect($this->generateUrl('my_url_to_site_index'));
+      }
     }
 }
