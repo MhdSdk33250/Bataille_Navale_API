@@ -30,7 +30,7 @@ class Player implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $password = null;
 
 
-    #[ORM\Column()]
+    #[ORM\Column(nullable: true)]
     private $imageFile;
 
     #[ORM\Column(length: 255, nullable: true)]
