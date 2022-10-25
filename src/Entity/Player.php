@@ -2,39 +2,50 @@
 
 namespace App\Entity;
 
-use App\Repository\PlayerRepository;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
-use Symfony\Component\Security\Core\User\UserInterface;
+use App\Repository\PlayerRepository;
+use Doctrine\Common\Collections\Collection;
 use Symfony\Component\HttpFoundation\File\File;
+use Doctrine\Common\Collections\ArrayCollection;
+use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Security\Core\User\UserInterface;
 use Vich\UploaderBundle\Mapping\Annotation\UploadableField;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 
 #[ORM\Entity(repositoryClass: PlayerRepository::class)]
 class Player implements UserInterface, PasswordAuthenticatedUserInterface
 {
+    #[Groups(['getGame'])]
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
-
     #[ORM\Column(length: 180, unique: true)]
+    #[Groups(['getGame'])]
     private ?string $username = null;
-
     #[ORM\Column]
+    #[Groups(['getGame'])]
     private array $roles = [];
-
     /**
      * @var string The hashed password
      */
+    #[Groups(['getGame'])]
     #[ORM\Column]
     private ?string $password = null;
 
-
     #[ORM\Column(nullable: true)]
+    #[Groups(['getGame'])]
     private $imageFile;
-
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['getGame'])]
     private ?string $imagePath;
+
+    #[ORM\ManyToOne(inversedBy: 'players')]
+    private ?Game $game = null;
+
+    public function __construct()
+    {
+    }
 
 
     public function getId(): ?int
@@ -126,6 +137,18 @@ class Player implements UserInterface, PasswordAuthenticatedUserInterface
     public function setImagePath(?string $imagePath): self
     {
         $this->imagePath = $imagePath;
+
+        return $this;
+    }
+
+    public function getGame(): ?Game
+    {
+        return $this->game;
+    }
+
+    public function setGame(?Game $game): self
+    {
+        $this->game = $game;
 
         return $this;
     }
