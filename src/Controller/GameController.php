@@ -29,14 +29,22 @@ class GameController extends AbstractController
     #[ParamConverter("game", options: ["id" => "idGame"], class: 'App\Entity\Game')]
     public function getGame(Game $game, SerializerInterface $serializer): JsonResponse
     {
-        $jsonGame = $serializer->serialize($game, 'json', ['groups' => 'getGame']);
-        return new JsonResponse($jsonGame, Response::HTTP_OK, ['accept' => 'json'], true);
+        if ($game->isStatus()) {
+            $jsonGame = $serializer->serialize($game, 'json', ['groups' => 'getGame']);
+            return new JsonResponse($jsonGame, Response::HTTP_OK, ['accept' => 'json'], true);
+        }
+        return new JsonResponse(['message' => 'Game not found'], Response::HTTP_NOT_FOUND, ['accept' => 'json'], true);
     }
 
     #[Route('api/game/filter/{date}', name: 'game.filter', methods: ['GET'])]
     public function filterGame($date, SerializerInterface $serializer): JsonResponse
     {
+
+
         $games = $this->gameRepository->filterByDate($date);
+        $games = array_filter($games, function ($game) {
+            return $game->isStatus();
+        });
         $jsonGames = $serializer->serialize($games, 'json', ['groups' => 'getGame']);
         return new JsonResponse($jsonGames, Response::HTTP_OK, ['accept' => 'json'], true);
     }

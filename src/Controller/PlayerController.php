@@ -40,6 +40,9 @@ class PlayerController extends AbstractController
     public function getPlayers(SerializerInterface $serializer): JsonResponse
     {
         $players = $this->playerRepository->findAll();
+        $players = array_filter($players, function ($player) {
+            return $player->isStatus();
+        });
         $jsonPlayers = $serializer->serialize($players, 'json', ['groups' => 'getPlayer']);
         return new JsonResponse($jsonPlayers, Response::HTTP_OK, ['accept' => 'json'], true);
     }
@@ -50,8 +53,11 @@ class PlayerController extends AbstractController
     #[ParamConverter("player", options: ["id" => "idPlayer"], class: 'App\Entity\Player')]
     public function player(Player $player, SerializerInterface $serializer): JsonResponse
     {
-        $jsonPlayer = $serializer->serialize($player, 'json', ['groups' => 'getPlayer']);
-        return new JsonResponse($jsonPlayer, Response::HTTP_OK, ['accept' => 'json'], true);
+        // player if status true
+        if ($player->isStatus()) {
+            $jsonPlayer = $serializer->serialize($player, 'json', ['groups' => 'getPlayer']);
+            return new JsonResponse($jsonPlayer, Response::HTTP_OK, ['accept' => 'json'], true);
+        }
     }
     /**
      * Delete player by id

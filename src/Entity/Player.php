@@ -43,6 +43,9 @@ class Player implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\ManyToOne(inversedBy: 'players')]
     private ?Game $game = null;
 
+    #[ORM\Column]
+    private ?bool $status = null;
+
     public function __construct()
     {
     }
@@ -149,6 +152,18 @@ class Player implements UserInterface, PasswordAuthenticatedUserInterface
     public function setGame(?Game $game): self
     {
         $this->game = $game;
+
+        return $this;
+    }
+
+    public function isStatus(): ?bool
+    {
+        return $this->status;
+    }
+
+    public function setStatus(bool $status): self
+    {
+        $this->status = $status;
 
         return $this;
     }
