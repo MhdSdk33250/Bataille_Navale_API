@@ -88,38 +88,22 @@ class GameController extends AbstractController
         return new JsonResponse($jsonGame, Response::HTTP_CREATED, ["Location" => $location], true);
     }
     // route to leave a game
-    #[Route('/api/game/leave/{codeGame}', name: 'game.leave', methods: ['POST'])]
+    #[Route('/api/game/leave', name: 'game.leave', methods: ['POST'])]
     // paramconverter to get the game with the code
-    #[ParamConverter("game", options: ["mapping" => ["codeGame" => "gameCode"]], class: 'App\Entity\Game')]
-    public function leaveGame(Game $game, SerializerInterface $serializer, UrlGeneratorInterface $urlGenerator, ManagerRegistry $doctrine): JsonResponse
+    public function leaveGame(SerializerInterface $serializer, UrlGeneratorInterface $urlGenerator, ManagerRegistry $doctrine): JsonResponse
     {
         $playerId = $this->getUser()->getId();
         $playerRepository = $doctrine->getRepository(Player::class);
         $currentPlayer = $playerRepository->find($playerId);
+        $game = $currentPlayer->getGame();
         $game->removePlayer($currentPlayer);
-        $this->em->persist($game);
+        if($game->getPlayers()->isEmpty()){
+            $game->setStatus(false);        }
         $this->em->flush();
         $jsonGame = $serializer->serialize($game, 'json', ['groups' => 'getGame']);
         $location = $urlGenerator->generate('game.get', ['idGame' => $game->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
         return new JsonResponse($jsonGame, Response::HTTP_CREATED, ["Location" => $location], true);
     }
-    // player can set number of boats
-    #[Route('/api/game/setBoats/{codeGame}', name: 'game.setBoats', methods: ['POST'])]
-    // paramconverter to get the game with the code
-    #[ParamConverter("game", options: ["mapping" => ["codeGame" => "gameCode"]], class: 'App\Entity\Game')]
-    public function setBoats(Game $game, SerializerInterface $serializer, UrlGeneratorInterface $urlGenerator, ManagerRegistry $doctrine, Request $request): JsonResponse
-    {
-        $playerId = $this->getUser()->getId();
-        $playerRepository = $doctrine->getRepository(Player::class);
-        $currentPlayer = $playerRepository->find($playerId);
-        $boats = $request->request->get('boats');
-        $boats = json_decode($boats);
-        $currentPlayer->setBoats($boats);
-        $this->em->persist($currentPlayer);
-        $this->em->flush();
-        $jsonGame = $serializer->serialize($game, 'json', ['groups' => 'getGame']);
-        $location = $urlGenerator->generate('game.get', ['idGame' => $game->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
-        return new JsonResponse($jsonGame, Response::HTTP_CREATED, ["Location" => $location], true);
-    }
+    
 
 }
