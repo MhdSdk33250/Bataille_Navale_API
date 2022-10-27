@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Game;
 use App\Entity\Player;
+use DateTimeImmutable;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -55,8 +56,7 @@ class GameController extends AbstractController
         $game->addPlayer($currentPlayer);
         $codeGame = rand(1000, 10000);
         $game->setGameCode($codeGame);
-        add-game-filtering-by-dates
-        $game->setCreatedAt(new \DateTimeImmutable());
+        $game->setCreatedAt(new DateTimeImmutable());
         $this->em->persist($game);
         $this->em->flush();
         $jsonGame = $serializer->serialize($game, 'json', ['groups' => 'getGame']);
