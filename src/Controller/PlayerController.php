@@ -40,7 +40,7 @@ class PlayerController extends AbstractController
     public function getPlayers(SerializerInterface $serializer): JsonResponse
     {
         $players = $this->playerRepository->findAll();
-        $jsonPlayers = $serializer->serialize($players, 'json');
+        $jsonPlayers = $serializer->serialize($players, 'json', ['groups' => 'getPlayer']);
         return new JsonResponse($jsonPlayers, Response::HTTP_OK, ['accept' => 'json'], true);
     }
     /**
@@ -50,7 +50,7 @@ class PlayerController extends AbstractController
     #[ParamConverter("player", options: ["id" => "idPlayer"], class: 'App\Entity\Player')]
     public function player(Player $player, SerializerInterface $serializer): JsonResponse
     {
-        $jsonPlayer = $serializer->serialize($player, 'json');
+        $jsonPlayer = $serializer->serialize($player, 'json', ['groups' => 'getPlayer']);
         return new JsonResponse($jsonPlayer, Response::HTTP_OK, ['accept' => 'json'], true);
     }
     /**
@@ -109,7 +109,7 @@ class PlayerController extends AbstractController
         return new JsonResponse($jsonPlayer, Response::HTTP_CREATED, ["Location" => $location], true);
     }
     /**
-     * Register new player
+     * Upload player profile pic
      */
     #[Route('/api/player/uploadpic', name: 'player.uploadpic', methods: ['POST'])]
     public function uploadpic(UploadService $uploader, ParameterBagInterface $parameterBag, ManagerRegistry $doctrine, Request $request, SerializerInterface $serializer, UrlGeneratorInterface $urlGenerator, UserPasswordHasherInterface $passwordHasher): JsonResponse
@@ -141,16 +141,15 @@ class PlayerController extends AbstractController
 
         $filePath = $player->getImagePath();
 
-      if(file_exists($filePath)){
-        $response = new Response();
-        $disposition = $response->headers->makeDisposition(ResponseHeaderBag::DISPOSITION_INLINE, "image");
-        $response->headers->set('Content-Disposition', $disposition);
-        $response->headers->set('Content-Type', 'image/png');
-        $response->setContent(file_get_contents($filePath));
-        return $response;
-      }
-      else{
-        return $this->redirect($this->generateUrl('my_url_to_site_index'));
-      }
+        if (file_exists($filePath)) {
+            $response = new Response();
+            $disposition = $response->headers->makeDisposition(ResponseHeaderBag::DISPOSITION_INLINE, "image");
+            $response->headers->set('Content-Disposition', $disposition);
+            $response->headers->set('Content-Type', 'image/png');
+            $response->setContent(file_get_contents($filePath));
+            return $response;
+        } else {
+            return $this->redirect($this->generateUrl('my_url_to_site_index'));
+        }
     }
 }

@@ -15,29 +15,29 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 #[ORM\Entity(repositoryClass: PlayerRepository::class)]
 class Player implements UserInterface, PasswordAuthenticatedUserInterface
 {
-    #[Groups(['getGame'])]
+    #[Groups(['getGame', 'getPlayer'])]
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
     #[ORM\Column(length: 180, unique: true)]
-    #[Groups(['getGame'])]
+    #[Groups(['getGame', 'getPlayer'])]
     private ?string $username = null;
     #[ORM\Column]
-    #[Groups(['getGame'])]
+    #[Groups(['getGame', 'getPlayer'])]
     private array $roles = [];
     /**
      * @var string The hashed password
      */
-    #[Groups(['getGame'])]
+    #[Groups(['getGame', 'getPlayer'])]
     #[ORM\Column]
     private ?string $password = null;
 
     #[ORM\Column(nullable: true)]
-    #[Groups(['getGame'])]
+    #[Groups(['getGame', 'getPlayer'])]
     private $imageFile;
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['getGame'])]
+    #[Groups(['getGame', 'getPlayer'])]
     private ?string $imagePath;
 
     #[ORM\ManyToOne(inversedBy: 'players')]
