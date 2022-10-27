@@ -48,7 +48,22 @@ class GameController extends AbstractController
         $game->addPlayer($currentPlayer);
         $codeGame = rand(1000, 10000);
         $game->setGameCode($codeGame);
-
+        $this->em->persist($game);
+        $this->em->flush();
+        $jsonGame = $serializer->serialize($game, 'json', ['groups' => 'getGame']);
+        $location = $urlGenerator->generate('game.get', ['idGame' => $game->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
+        return new JsonResponse($jsonGame, Response::HTTP_CREATED, ["Location" => $location], true);
+    }
+    // route to join a game
+    #[Route('/api/game/join/{codeGame}', name: 'game.join', methods: ['POST'])]
+    // paramconverter to get the game with the code
+    #[ParamConverter("game", options: ["mapping" => ["codeGame" => "gameCode"]], class: 'App\Entity\Game')]
+    public function joinGame(Game $game, SerializerInterface $serializer, UrlGeneratorInterface $urlGenerator, ManagerRegistry $doctrine): JsonResponse
+    {
+        $playerId = $this->getUser()->getId();
+        $playerRepository = $doctrine->getRepository(Player::class);
+        $currentPlayer = $playerRepository->find($playerId);
+        $game->addPlayer($currentPlayer);
         $this->em->persist($game);
         $this->em->flush();
         $jsonGame = $serializer->serialize($game, 'json', ['groups' => 'getGame']);
