@@ -29,6 +29,9 @@ class Game
     #[ORM\OneToMany(mappedBy: 'game', targetEntity: player::class)]
     private Collection $players;
 
+    #[ORM\Column]
+    private ?\DateTimeImmutable $createdAt = null;
+
 
     public function __construct()
     {
@@ -102,6 +105,18 @@ class Game
                 $player->setGame(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getCreatedAt(): ?\DateTimeImmutable
+    {
+        return $this->createdAt;
+    }
+
+    public function setCreatedAt(\DateTimeImmutable $createdAt): self
+    {
+        $this->createdAt = $createdAt;
 
         return $this;
     }

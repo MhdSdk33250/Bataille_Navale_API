@@ -32,6 +32,14 @@ class GameController extends AbstractController
         return new JsonResponse($jsonGame, Response::HTTP_OK, ['accept' => 'json'], true);
     }
 
+    #[Route('api/game/filter/{date}', name: 'game.filter', methods: ['GET'])]
+    public function filterGame($date, SerializerInterface $serializer): JsonResponse
+    {
+        $games = $this->gameRepository->filterByDate($date);
+        $jsonGames = $serializer->serialize($games, 'json', ['groups' => 'getGame']);
+        return new JsonResponse($jsonGames, Response::HTTP_OK, ['accept' => 'json'], true);
+    }
+
     /**
      * Register new game
      */
@@ -42,12 +50,14 @@ class GameController extends AbstractController
 
         $playerRepository = $doctrine->getRepository(Player::class);
         $currentPlayer = $playerRepository->find($playerId);
-
         $game = new Game();
         $game->setStatus(true);
         $game->addPlayer($currentPlayer);
         $codeGame = rand(1000, 10000);
         $game->setGameCode($codeGame);
+        $game->setCreatedAt(new \DateTimeImmutable());
+
+
 
         $this->em->persist($game);
         $this->em->flush();
