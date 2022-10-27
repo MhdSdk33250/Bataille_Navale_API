@@ -108,6 +108,7 @@ class PlayerController extends AbstractController
             $plaintextPassword
         );
         $player->setPassword($hashedPassword);
+        $player->setStatus(true);
         $this->em->persist($player);
         $this->em->flush();
         $jsonPlayer = $serializer->serialize($player, 'json');
