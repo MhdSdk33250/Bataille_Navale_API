@@ -10,11 +10,12 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\Serializer\SerializerInterface;
+use JMS\Serializer\SerializerInterface;
+use JMS\Serializer\Serializer;
+use JMS\Serializer\SerializationContext;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
-use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 class GameController extends AbstractController
 {
@@ -30,7 +31,8 @@ class GameController extends AbstractController
     public function getGame(Game $game, SerializerInterface $serializer): JsonResponse
     {
         if ($game->isStatus()) {
-            $jsonGame = $serializer->serialize($game, 'json', ['groups' => 'getGame']);
+            $context = SerializationContext::create()->setGroups(['getGame']);
+            $jsonGame = $serializer->serialize($game, 'json', $context);
             return new JsonResponse($jsonGame, Response::HTTP_OK, ['accept' => 'json'], true);
         }
         return new JsonResponse(['message' => 'Game not found'], Response::HTTP_NOT_FOUND, ['accept' => 'json'], true);
@@ -45,7 +47,8 @@ class GameController extends AbstractController
         $games = array_filter($games, function ($game) {
             return $game->isStatus();
         });
-        $jsonGames = $serializer->serialize($games, 'json', ['groups' => 'getGame']);
+        $context = SerializationContext::create()->setGroups(['getGame']);
+        $jsonGames = $serializer->serialize($games, 'json', $context);
         return new JsonResponse($jsonGames, Response::HTTP_OK, ['accept' => 'json'], true);
     }
 
@@ -67,7 +70,8 @@ class GameController extends AbstractController
         $game->setCreatedAt(new DateTimeImmutable());
         $this->em->persist($game);
         $this->em->flush();
-        $jsonGame = $serializer->serialize($game, 'json', ['groups' => 'getGame']);
+        $context = SerializationContext::create()->setGroups(['getGame']);
+        $jsonGame = $serializer->serialize($game, 'json', $context);
         $location = $urlGenerator->generate('game.get', ['idGame' => $game->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
         return new JsonResponse($jsonGame, Response::HTTP_CREATED, ["Location" => $location], true);
     }
@@ -83,7 +87,8 @@ class GameController extends AbstractController
         $game->addPlayer($currentPlayer);
         $this->em->persist($game);
         $this->em->flush();
-        $jsonGame = $serializer->serialize($game, 'json', ['groups' => 'getGame']);
+        $context = SerializationContext::create()->setGroups(['getGame']);
+        $jsonGame = $serializer->serialize($game, 'json', $context);
         $location = $urlGenerator->generate('game.get', ['idGame' => $game->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
         return new JsonResponse($jsonGame, Response::HTTP_CREATED, ["Location" => $location], true);
     }
@@ -97,13 +102,13 @@ class GameController extends AbstractController
         $currentPlayer = $playerRepository->find($playerId);
         $game = $currentPlayer->getGame();
         $game->removePlayer($currentPlayer);
-        if($game->getPlayers()->isEmpty()){
-            $game->setStatus(false);        }
+        if ($game->getPlayers()->isEmpty()) {
+            $game->setStatus(false);
+        }
         $this->em->flush();
-        $jsonGame = $serializer->serialize($game, 'json', ['groups' => 'getGame']);
+        $context = SerializationContext::create()->setGroups(['getGame']);
+        $jsonGame = $serializer->serialize($game, 'json', $context);
         $location = $urlGenerator->generate('game.get', ['idGame' => $game->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
         return new JsonResponse($jsonGame, Response::HTTP_CREATED, ["Location" => $location], true);
     }
-    
-
 }

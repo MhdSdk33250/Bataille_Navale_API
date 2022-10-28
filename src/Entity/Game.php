@@ -2,12 +2,23 @@
 
 namespace App\Entity;
 
+use Hateoas\Configuration\Annotation as Hateoas;
 use Doctrine\ORM\Mapping as ORM;
 use App\Repository\GameRepository;
+use JMS\Serializer\Annotation\Groups;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
-use Symfony\Component\Serializer\Annotation\Groups;
 
+/**
+ * @Hateoas\Relation(
+ * "self",
+ * href = @Hateoas\Route(
+ * "game.get",
+ * parameters = { "idGame" = "expr(object.getId())" },
+ * ),
+ * exclusion = @Hateoas\Exclusion(groups = "getGame")
+ * )
+ */
 #[ORM\Entity(repositoryClass: GameRepository::class)]
 class Game
 {
@@ -26,7 +37,7 @@ class Game
     #[ORM\Column(nullable: true)]
     private ?int $numberOfBoats = null;
     #[Groups(['getGame'])]
-    #[ORM\OneToMany(mappedBy: 'game', targetEntity: player::class)]
+    #[ORM\OneToMany(mappedBy: 'game', targetEntity: Player::class)]
     private Collection $players;
 
     #[ORM\Column]

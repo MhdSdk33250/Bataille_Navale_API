@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Repository\FleetRepository;
 use Doctrine\ORM\Mapping as ORM;
+use JMS\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: FleetRepository::class)]
 class Fleet

@@ -11,7 +11,6 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -22,6 +21,9 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+use JMS\Serializer\SerializerInterface;
+use JMS\Serializer\Serializer;
+use JMS\Serializer\SerializationContext;
 
 class PlayerController extends AbstractController
 {
@@ -43,7 +45,8 @@ class PlayerController extends AbstractController
         $players = array_filter($players, function ($player) {
             return $player->isStatus();
         });
-        $jsonPlayers = $serializer->serialize($players, 'json', ['groups' => 'getPlayer']);
+        $context = SerializationContext::create()->setGroups(['getPlayer']);
+        $jsonPlayers = $serializer->serialize($players, 'json', $context);
         return new JsonResponse($jsonPlayers, Response::HTTP_OK, ['accept' => 'json'], true);
     }
     /**
@@ -55,7 +58,8 @@ class PlayerController extends AbstractController
     {
         // player if status true
         if ($player->isStatus()) {
-            $jsonPlayer = $serializer->serialize($player, 'json', ['groups' => 'getPlayer']);
+            $context = SerializationContext::create()->setGroups(['getPlayer']);
+            $jsonPlayer = $serializer->serialize($player, 'json', $context);
             return new JsonResponse($jsonPlayer, Response::HTTP_OK, ['accept' => 'json'], true);
         }
     }
@@ -63,7 +67,7 @@ class PlayerController extends AbstractController
      * Delete player by id
      */
     #[Route('/api/player/{idPlayer}', name: 'player.delete', methods: ['DELETE'])]
-    #[ParamConverter("player", options: ["id" => "idPlayer"], class: 'App\Entity\Player')]
+    #[ParamConverter("Player", options: ["id" => "idPlayer"], class: 'App\Entity\Player')]
     public function deletePlayer(Player $player): JsonResponse
     {
         $this->playerRepository->remove($player);
@@ -77,14 +81,15 @@ class PlayerController extends AbstractController
      * Edit player by id
      */
     #[Route('/api/player/{idPlayer}', name: 'player.edit', methods: ['PATCH'])]
-    #[ParamConverter("player", options: ["id" => "idPlayer"], class: 'App\Entity\Player')]
+    #[ParamConverter("Player", options: ["id" => "idPlayer"], class: 'App\Entity\Player')]
     public function updatePlayer(Request $request, Player $player, EntityManagerInterface $em, SerializerInterface $serializer, UrlGeneratorInterface $urlGenerator): JsonResponse
     {
         $updatePlayer = $serializer->deserialize($request->getContent(), Player::class, 'json', [AbstractNormalizer::OBJECT_TO_POPULATE => $player]);
 
         $this->em->persist($updatePlayer);
         $this->em->flush();
-        $jsonPlayer = $serializer->serialize($updatePlayer, 'json', ['groups' => 'getPlayers']);
+        $context = SerializationContext::create()->setGroups(['getPlayer']);
+        $jsonPlayer = $serializer->serialize($updatePlayer, 'json', $context);
         $location = $urlGenerator->generate('player.get', ['idPlayer' => $player->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
 
         return new JsonResponse($jsonPlayer, Response::HTTP_CREATED, ["Location" => $location], true);
@@ -119,7 +124,7 @@ class PlayerController extends AbstractController
      * Upload player profile pic
      */
     #[Route('/api/player/uploadpic', name: 'player.uploadpic', methods: ['POST'])]
-    public function uploadpic(UploadService $uploader, ParameterBagInterface $parameterBag, ManagerRegistry $doctrine, Request $request, SerializerInterface $serializer, UrlGeneratorInterface $urlGenerator, UserPasswordHasherInterface $passwordHasher): JsonResponse
+    public function uploadpic(UploadService $uploader, ManagerRegistry $doctrine, Request $request, SerializerInterface $serializer, UrlGeneratorInterface $urlGenerator, UserPasswordHasherInterface $passwordHasher): JsonResponse
     {
         $playerId = $this->getUser()->getId();
 
