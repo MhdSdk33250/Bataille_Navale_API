@@ -2,15 +2,65 @@
 
 namespace App\Entity;
 
+use Hateoas\Configuration\Annotation as Hateoas;
 use Doctrine\ORM\Mapping as ORM;
 use App\Repository\PlayerRepository;
+use JMS\Serializer\Annotation\Groups;
 use Doctrine\Common\Collections\Collection;
-use Symfony\Component\HttpFoundation\File\File;
 use Doctrine\Common\Collections\ArrayCollection;
-use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Security\Core\User\UserInterface;
-use Vich\UploaderBundle\Mapping\Annotation\UploadableField;
+
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+
+/**
+ * create all hateoas relations
+ * @Hateoas\Relation(
+ * "self",
+ * href = @Hateoas\Route(
+ * "player.get",
+ * parameters = { "idPlayer" = "expr(object.getId())" },
+ * ),
+ * exclusion = @Hateoas\Exclusion(groups = "getPlayer")
+ * ),
+ * @Hateoas\Relation(
+ * "game",
+ * href = @Hateoas\Route(
+ * "game.get",
+ * parameters = { "idGame" = "expr(object.getGame().getId())" },
+ * ),
+ * exclusion = @Hateoas\Exclusion(groups = "getPlayer")
+ * ),
+ * @Hateoas\Relation(
+ * "up",
+ * href = "/api/player/",
+ * exclusion = @Hateoas\Exclusion(groups = "getPlayer")
+ * )
+ * @Hateoas\Relation(
+ * "collection",
+ * href = @Hateoas\Route(
+ * "get.players",
+ * ),
+ * exclusion = @Hateoas\Exclusion(groups = "getPlayer")
+ * ),
+ * @Hateoas\Relation(
+ * "update",
+ * href = @Hateoas\Route(
+ * "player.edit",
+ * parameters = { "idPlayer" = "expr(object.getGame().getId())" },
+ * ),
+ * exclusion = @Hateoas\Exclusion(groups = "getPlayer")
+ * ),
+ * 
+ * @Hateoas\Relation(
+ * "remove",
+ * href = @Hateoas\Route(
+ * "player.delete",
+ * parameters = { "idPlayer" = "expr(object.getGame().getId())" },
+ * ),
+ * exclusion = @Hateoas\Exclusion(groups = "getPlayer")
+ * ),
+ * )
+ */
 
 #[ORM\Entity(repositoryClass: PlayerRepository::class)]
 class Player implements UserInterface, PasswordAuthenticatedUserInterface
