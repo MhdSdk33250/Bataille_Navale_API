@@ -11,6 +11,7 @@
         "doctrine/orm": "^2.13",
         "gedmo/doctrine-extensions": "^3.9",
         "lexik/jwt-authentication-bundle": "^2.16",
+        "nelmio/api-doc-bundle": "^4.10",
         "sensio/framework-extra-bundle": "^6.2",
         "symfony/asset": "6.1.*",
         "symfony/console": "6.1.*",
@@ -20,6 +21,7 @@
         "symfony/maker-bundle": "^1.47",
         "symfony/runtime": "6.1.*",
         "symfony/serializer": "6.1.*",
+        "symfony/twig-bundle": "6.1.*",
         "symfony/yaml": "6.1.*",
         "vich/uploader-bundle": "^1.21"
     },
