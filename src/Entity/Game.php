@@ -42,11 +42,15 @@ class Game
 
     #[ORM\Column]
     private ?\DateTimeImmutable $createdAt = null;
+    #[Groups(['getGame'])]
+    #[ORM\OneToMany(mappedBy: 'game', targetEntity: Fleet::class)]
+    private Collection $fleet;
 
 
     public function __construct()
     {
         $this->players = new ArrayCollection();
+        $this->fleet = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -128,6 +132,36 @@ class Game
     public function setCreatedAt(\DateTimeImmutable $createdAt): self
     {
         $this->createdAt = $createdAt;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, fleet>
+     */
+    public function getFleet(): Collection
+    {
+        return $this->fleet;
+    }
+
+    public function addFleet(fleet $fleet): self
+    {
+        if (!$this->fleet->contains($fleet)) {
+            $this->fleet->add($fleet);
+            $fleet->setGame($this);
+        }
+
+        return $this;
+    }
+
+    public function removeFleet(fleet $fleet): self
+    {
+        if ($this->fleet->removeElement($fleet)) {
+            // set the owning side to null (unless already changed)
+            if ($fleet->getGame() === $this) {
+                $fleet->setGame(null);
+            }
+        }
 
         return $this;
     }
