@@ -12,16 +12,20 @@ class Fleet
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['getGame'])]
     private ?int $id = null;
-
+    #[Groups(['getGame'])]
     #[ORM\Column]
     private ?bool $status = null;
-
+    #[Groups(['getGame'])]
     #[ORM\Column]
     private ?int $fleetDimensionX = null;
-
+    #[Groups(['getGame'])]
     #[ORM\Column]
     private ?int $fleetDimensionY = null;
+
+    #[ORM\ManyToOne(inversedBy: 'Fleet')]
+    private ?Game $game = null;
 
     public function getId(): ?int
     {
@@ -60,6 +64,18 @@ class Fleet
     public function setFleetDimensionY(int $fleetDimensionY): self
     {
         $this->fleetDimensionY = $fleetDimensionY;
+
+        return $this;
+    }
+
+    public function getGame(): ?Game
+    {
+        return $this->game;
+    }
+
+    public function setGame(?Game $game): self
+    {
+        $this->game = $game;
 
         return $this;
     }

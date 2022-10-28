@@ -111,4 +111,18 @@ class GameController extends AbstractController
         $location = $urlGenerator->generate('game.get', ['idGame' => $game->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
         return new JsonResponse($jsonGame, Response::HTTP_CREATED, ["Location" => $location], true);
     }
+
+    // config player current game 
+    #[Route('/api/game/config', name: 'game.config', methods: ['POST'])]
+    public function configGame(Request $request, SerializerInterface $serializer, UrlGeneratorInterface $urlGenerator, ManagerRegistry $doctrine): JsonResponse
+    {
+        $playerId = $this->getUser()->getId();
+        $playerRepository = $doctrine->getRepository(Player::class);
+        $currentPlayer = $playerRepository->find($playerId);
+        $game = $currentPlayer->getGame();
+        $game->setNumberOfBoats($request->get('numberOfBoats')  ?? 3);
+        $jsonGame = $serializer->serialize($game, 'json', ['groups' => 'getGame']);
+        $location = $urlGenerator->generate('game.get', ['idGame' => $game->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
+        return new JsonResponse($jsonGame, Response::HTTP_CREATED, ["Location" => $location], true);
+    }
 }
