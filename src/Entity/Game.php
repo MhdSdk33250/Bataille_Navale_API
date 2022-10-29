@@ -13,10 +13,52 @@ use Doctrine\Common\Collections\ArrayCollection;
  * @Hateoas\Relation(
  * "self",
  * href = @Hateoas\Route(
- * "game.get",
+ * "game.get",absolute = true,
  * parameters = { "idGame" = "expr(object.getId())" },
  * ),
  * exclusion = @Hateoas\Exclusion(groups = "getGame")
+ * )
+ * @Hateoas\Relation(
+ * "up",
+ * href = "http://127.0.0.1:8000/api/game/",
+ * exclusion = @Hateoas\Exclusion(groups = "getGame")
+ * )
+ * @Hateoas\Relation(
+ * "collection",
+ * href = @Hateoas\Route(
+ * "get.games",absolute = true,
+ * ),
+ * exclusion = @Hateoas\Exclusion(groups = "getGame")
+ * ),
+ * @Hateoas\Relation(
+ * "config",
+ * href = @Hateoas\Route(
+ * "game.config",absolute = true,
+ * ),
+ * exclusion = @Hateoas\Exclusion(groups = "getGame")
+ * )
+ * @Hateoas\Relation(
+ * "join",
+ * href = @Hateoas\Route(
+ * "game.join",absolute = true,
+ * parameters = { "codeGame" = "expr(object.getGameCode())" },
+ * ),
+ * exclusion = @Hateoas\Exclusion(groups = "getGame")
+ * )
+ * @Hateoas\Relation(
+ * "create",
+ * href = @Hateoas\Route(
+ * "game.create",absolute = true,
+ * ),
+ * exclusion = @Hateoas\Exclusion(groups = "getGame")
+ * )
+ * @Hateoas\Relation(
+ * "leave",
+ * href = @Hateoas\Route(
+ * "game.leave",absolute = true,
+ * ),
+ * exclusion = @Hateoas\Exclusion(groups = "getGame")
+ * ),
  * )
  */
 #[ORM\Entity(repositoryClass: GameRepository::class)]

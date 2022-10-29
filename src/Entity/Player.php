@@ -17,7 +17,7 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
  * @Hateoas\Relation(
  * "self",
  * href = @Hateoas\Route(
- * "player.get",
+ * "player.get",absolute = true,
  * parameters = { "idPlayer" = "expr(object.getId())" },
  * ),
  * exclusion = @Hateoas\Exclusion(groups = "getPlayer")
@@ -25,27 +25,27 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
  * @Hateoas\Relation(
  * "game",
  * href = @Hateoas\Route(
- * "game.get",
+ * "game.get",absolute = true,
  * parameters = { "idGame" = "expr(object.getGame().getId())" },
  * ),
  * exclusion = @Hateoas\Exclusion(groups = "getPlayer")
  * ),
  * @Hateoas\Relation(
  * "up",
- * href = "/api/player/",
+ * href = "http://127.0.0.1:8000/api/player/",
  * exclusion = @Hateoas\Exclusion(groups = "getPlayer")
  * )
  * @Hateoas\Relation(
  * "collection",
  * href = @Hateoas\Route(
- * "get.players",
+ * "get.players",absolute = true,
  * ),
  * exclusion = @Hateoas\Exclusion(groups = "getPlayer")
  * ),
  * @Hateoas\Relation(
  * "update",
  * href = @Hateoas\Route(
- * "player.edit",
+ * "player.edit",absolute = true,
  * parameters = { "idPlayer" = "expr(object.getGame().getId())" },
  * ),
  * exclusion = @Hateoas\Exclusion(groups = "getPlayer")
@@ -54,7 +54,7 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
  * @Hateoas\Relation(
  * "remove",
  * href = @Hateoas\Route(
- * "player.delete",
+ * "player.delete",absolute = true,
  * parameters = { "idPlayer" = "expr(object.getGame().getId())" },
  * ),
  * exclusion = @Hateoas\Exclusion(groups = "getPlayer")

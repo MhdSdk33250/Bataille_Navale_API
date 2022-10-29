@@ -16,6 +16,8 @@ use JMS\Serializer\SerializationContext;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
+use Nelmio\ApiDocBundle\Annotation\Security;
+use OpenApi\Annotations as OA;
 
 class GameController extends AbstractController
 {
@@ -51,9 +53,27 @@ class GameController extends AbstractController
         $jsonGames = $serializer->serialize($games, 'json', $context);
         return new JsonResponse($jsonGames, Response::HTTP_OK, ['accept' => 'json'], true);
     }
+    // get all games 
+    #[Route('api/games/', name: 'get.games', methods: ['GET'])]
+    public function getGames(SerializerInterface $serializer): JsonResponse
+    {
+        $games = $this->gameRepository->findAll();
+        $games = array_filter($games, function ($game) {
+            return $game->isStatus();
+        });
+        $context = SerializationContext::create()->setGroups(['getGame']);
+        $jsonGames = $serializer->serialize($games, 'json', $context);
+        return new JsonResponse($jsonGames, Response::HTTP_OK, ['accept' => 'json'], true);
+    }
 
     /**
-     * Register new game
+     * Create a new game with a random key to join
+     *
+     * Generate a new game and automatically add you as player 1 
+     *
+     * @Route("/api/game/create", methods={"POST"})
+     * @OA\Tag(name="Game routes")
+     * @Security(name="Bearer")
      */
     #[Route('/api/game/create', name: 'game.create', methods: ['POST'])]
     public function createGame(SerializerInterface $serializer, UrlGeneratorInterface $urlGenerator, ManagerRegistry $doctrine): JsonResponse
@@ -112,7 +132,6 @@ class GameController extends AbstractController
         return new JsonResponse($jsonGame, Response::HTTP_CREATED, ["Location" => $location], true);
     }
 
-    // config player current game 
     #[Route('/api/game/config', name: 'game.config', methods: ['POST'])]
     public function configGame(Request $request, SerializerInterface $serializer, UrlGeneratorInterface $urlGenerator, ManagerRegistry $doctrine): JsonResponse
     {
@@ -120,8 +139,12 @@ class GameController extends AbstractController
         $playerRepository = $doctrine->getRepository(Player::class);
         $currentPlayer = $playerRepository->find($playerId);
         $game = $currentPlayer->getGame();
+        if ($game === null) {
+            return new JsonResponse(['message' => 'Game not found'], Response::HTTP_NOT_FOUND, ['accept' => 'json'], true);
+        }
         $game->setNumberOfBoats($request->get('numberOfBoats')  ?? 3);
-        $jsonGame = $serializer->serialize($game, 'json', ['groups' => 'getGame']);
+        $context = SerializationContext::create()->setGroups(['getGame']);
+        $jsonGame = $serializer->serialize($game, 'json', $context);
         $location = $urlGenerator->generate('game.get', ['idGame' => $game->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
         return new JsonResponse($jsonGame, Response::HTTP_CREATED, ["Location" => $location], true);
     }
