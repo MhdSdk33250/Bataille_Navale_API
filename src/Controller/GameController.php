@@ -27,7 +27,14 @@ class GameController extends AbstractController
         $this->em = $doctrine->getManager();
         $this->gameRepository = $doctrine->getRepository(Game::class);
     }
-
+    /**
+     * Return specified game
+     *
+     * Search game with Given id and return it
+     *
+     * @OA\Tag(name="Game routes")
+     * @Security(name="Bearer")
+     */
     #[Route('api/game/{idGame}', name: 'game.get', methods: ['GET'])]
     #[ParamConverter("game", options: ["id" => "idGame"], class: 'App\Entity\Game')]
     public function getGame(Game $game, SerializerInterface $serializer): JsonResponse
@@ -39,7 +46,14 @@ class GameController extends AbstractController
         }
         return new JsonResponse(['message' => 'Game not found'], Response::HTTP_NOT_FOUND, ['accept' => 'json'], true);
     }
-
+    /**
+     * Return filtered list of game
+     *
+     * return filtered list of game with given date, not usefull in the game
+     *
+     * @OA\Tag(name="Game routes")
+     * @Security(name="Bearer")
+     */
     #[Route('api/game/filter/{date}', name: 'game.filter', methods: ['GET'])]
     public function filterGame($date, SerializerInterface $serializer): JsonResponse
     {
@@ -53,7 +67,15 @@ class GameController extends AbstractController
         $jsonGames = $serializer->serialize($games, 'json', $context);
         return new JsonResponse($jsonGames, Response::HTTP_OK, ['accept' => 'json'], true);
     }
-    // get all games 
+
+    /**
+     * Return a list of active games
+     *
+     * Generate a new game and automatically add you as player 1 
+     *
+     * @OA\Tag(name="Game routes")
+     * @Security(name="Bearer")
+     */
     #[Route('api/games/', name: 'get.games', methods: ['GET'])]
     public function getGames(SerializerInterface $serializer): JsonResponse
     {
@@ -71,7 +93,6 @@ class GameController extends AbstractController
      *
      * Generate a new game and automatically add you as player 1 
      *
-     * @Route("/api/game/create", methods={"POST"})
      * @OA\Tag(name="Game routes")
      * @Security(name="Bearer")
      */
@@ -90,17 +111,28 @@ class GameController extends AbstractController
         $game->setCreatedAt(new DateTimeImmutable());
         $this->em->persist($game);
         $this->em->flush();
-        $context = SerializationContext::create()->setGroups(['getGame']);
-        $jsonGame = $serializer->serialize($game, 'json', $context);
+        $json = $this->json([
+            "message" => "Game created",
+            "game code" => $codeGame,
+            "game url" => $urlGenerator->generate('game.get', ['idGame' => $game->getId()], UrlGeneratorInterface::ABSOLUTE_URL)
+        ]);
         $location = $urlGenerator->generate('game.get', ['idGame' => $game->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
-        return new JsonResponse($jsonGame, Response::HTTP_CREATED, ["Location" => $location], true);
+        return new JsonResponse($json, Response::HTTP_CREATED, ["Location" => $location], true);
     }
-    // route to join a game
     #[Route('/api/game/join/{codeGame}', name: 'game.join', methods: ['POST'])]
-    // paramconverter to get the game with the code
-    #[ParamConverter("game", options: ["mapping" => ["codeGame" => "gameCode"]], class: 'App\Entity\Game')]
-    public function joinGame(Game $game, SerializerInterface $serializer, UrlGeneratorInterface $urlGenerator, ManagerRegistry $doctrine): JsonResponse
+    /**
+     * Join a game with the given code
+     *
+     * You need to be logged in to join a game, this add u to the game as a player 2
+     * @OA\Tag(name="Game routes")
+     * @Security(name="Bearer")
+     */
+    public function joinGame(string $codeGame, SerializerInterface $serializer, UrlGeneratorInterface $urlGenerator, ManagerRegistry $doctrine): JsonResponse
     {
+        $game = $this->gameRepository->findOneBy(['gameCode' => $codeGame]);
+        if (!$game) {
+            return new JsonResponse($this->json(['message' => 'Game not found']), Response::HTTP_NOT_FOUND, ['accept' => 'json'], true);
+        }
         $playerId = $this->getUser()->getId();
         $playerRepository = $doctrine->getRepository(Player::class);
         $currentPlayer = $playerRepository->find($playerId);
@@ -108,13 +140,23 @@ class GameController extends AbstractController
         $this->em->persist($game);
         $this->em->flush();
         $context = SerializationContext::create()->setGroups(['getGame']);
-        $jsonGame = $serializer->serialize($game, 'json', $context);
+        $json = $this->json([
+            'message' => 'Game successfully joined',
+            "game url" => $urlGenerator->generate('game.get', ['idGame' => $game->getId()], UrlGeneratorInterface::ABSOLUTE_URL)
+        ]);
+
         $location = $urlGenerator->generate('game.get', ['idGame' => $game->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
-        return new JsonResponse($jsonGame, Response::HTTP_CREATED, ["Location" => $location], true);
+        return new JsonResponse($json, Response::HTTP_CREATED, ["Location" => $location], true);
     }
-    // route to leave a game
     #[Route('/api/game/leave', name: 'game.leave', methods: ['POST'])]
-    // paramconverter to get the game with the code
+    /**
+     * Leave game
+     *
+     * You leave the game you are currently in
+     *
+     * @OA\Tag(name="Game routes")
+     * @Security(name="Bearer")
+     */
     public function leaveGame(SerializerInterface $serializer, UrlGeneratorInterface $urlGenerator, ManagerRegistry $doctrine): JsonResponse
     {
         $playerId = $this->getUser()->getId();
@@ -131,7 +173,25 @@ class GameController extends AbstractController
         $location = $urlGenerator->generate('game.get', ['idGame' => $game->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
         return new JsonResponse($jsonGame, Response::HTTP_CREATED, ["Location" => $location], true);
     }
-
+    /**
+     * Configure game
+     *
+     * Config the game you are currently in
+     * @OA\Parameter(
+     * name="numberOfBoats",
+     * in="query",
+     * description="number of boats each players will have",
+     * @OA\Schema(type="number")
+     * )
+     * @OA\Parameter(
+     * name="fleetDimensions",
+     * in="query",
+     * description="square size of the fleet",
+     * @OA\Schema(type="number")
+     * )
+     * @OA\Tag(name="Game routes")
+     * @Security(name="Bearer")
+     */
     #[Route('/api/game/config', name: 'game.config', methods: ['POST'])]
     public function configGame(Request $request, SerializerInterface $serializer, UrlGeneratorInterface $urlGenerator, ManagerRegistry $doctrine): JsonResponse
     {
@@ -140,7 +200,10 @@ class GameController extends AbstractController
         $currentPlayer = $playerRepository->find($playerId);
         $game = $currentPlayer->getGame();
         if ($game === null) {
-            return new JsonResponse(['message' => 'Game not found'], Response::HTTP_NOT_FOUND, ['accept' => 'json'], true);
+            return new JsonResponse($this->json([
+                'message' => 'You are not in a game, to join a game use the following url',
+                "url" => $urlGenerator->generate('game.join', ["codeGame" => "12345"], UrlGeneratorInterface::ABSOLUTE_URL)
+            ]), Response::HTTP_NOT_FOUND, ['accept' => 'json'], true);
         }
         $game->setNumberOfBoats($request->get('numberOfBoats')  ?? 3);
         $context = SerializationContext::create()->setGroups(['getGame']);

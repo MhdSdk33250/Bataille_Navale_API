@@ -10,19 +10,13 @@ class GameService
 {
     private $logger;
     private $projectDir;
-    
+
     public function __construct(string $projectDir)
     {
         $this->projectDir = $projectDir;
     }
-    public function createGame($uploadDir, $file, )
+    public function launchGame()
     {
-        try {
-           
-        } catch (FileException $e){
-
-            $this->logger->error('failed to upload image: ' . $e->getMessage());
-            throw new FileException('Failed to upload file');
-        }
+        $this->logger->info('Game launched');
     }
 }

@@ -116,9 +116,13 @@ class PlayerController extends AbstractController
         $player->setStatus(true);
         $this->em->persist($player);
         $this->em->flush();
+        $json = $this->json([
+            "message" => "User registered",
+            "user url" => $urlGenerator->generate('player.get', ['idPlayer' => $player->getId()], UrlGeneratorInterface::ABSOLUTE_URL)
+        ]);
         $jsonPlayer = $serializer->serialize($player, 'json');
         $location = $urlGenerator->generate('player.get', ['idPlayer' => $player->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
-        return new JsonResponse($jsonPlayer, Response::HTTP_CREATED, ["Location" => $location], true);
+        return new JsonResponse($json, Response::HTTP_CREATED, ["Location" => $location], true);
     }
     /**
      * Upload player profile pic
@@ -139,6 +143,7 @@ class PlayerController extends AbstractController
         $this->em->flush();
         $jsonResponse = $this->json([
             'message' => 'Player picture updated',
+            "user picture url" => $imageUrl
         ]);
         $location = $urlGenerator->generate('picture', ['idPlayer' => $currentPlayer->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
         return new JsonResponse($jsonResponse, Response::HTTP_CREATED, ["Location" => $location], true);
