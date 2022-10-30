@@ -35,6 +35,16 @@ class PlayerController extends AbstractController
         $this->em = $doctrine->getManager();
         $this->playerRepository = $doctrine->getRepository(Player::class);
     }
+    // route to get current player
+    #[Route('/api/player/current', name: 'player.current', methods: ['GET'])]
+    public function getCurrentPlayer(SerializerInterface $serializer): JsonResponse
+    {
+        $playerId = $this->getUser()->getId();
+        $player = $this->playerRepository->find($playerId);
+        $context = SerializationContext::create()->setGroups(['getPlayer']);
+        $jsonPlayer = $serializer->serialize($player, 'json', $context);
+        return new JsonResponse($jsonPlayer, Response::HTTP_OK, ['accept' => 'json'], true);
+    }
     /**
      * Get all players
      */
@@ -120,7 +130,6 @@ class PlayerController extends AbstractController
             "message" => "User registered",
             "user url" => $urlGenerator->generate('player.get', ['idPlayer' => $player->getId()], UrlGeneratorInterface::ABSOLUTE_URL)
         ]);
-        $jsonPlayer = $serializer->serialize($player, 'json');
         $location = $urlGenerator->generate('player.get', ['idPlayer' => $player->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
         return new JsonResponse($json, Response::HTTP_CREATED, ["Location" => $location], true);
     }
@@ -148,6 +157,9 @@ class PlayerController extends AbstractController
         $location = $urlGenerator->generate('picture', ['idPlayer' => $currentPlayer->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
         return new JsonResponse($jsonResponse, Response::HTTP_CREATED, ["Location" => $location], true);
     }
+
+
+
     /**
      * Get player profile picture
      */

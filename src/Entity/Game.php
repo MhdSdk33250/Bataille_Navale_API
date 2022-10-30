@@ -88,6 +88,12 @@ class Game
     #[ORM\OneToMany(mappedBy: 'game', targetEntity: Fleet::class)]
     private Collection $fleet;
 
+    #[ORM\Column(length: 255)]
+    private ?string $gameState = "Standby";
+    #[Groups(['getGame'])]
+    #[ORM\Column(nullable: true)]
+    private ?int $fleetDimension = null;
+
 
     public function __construct()
     {
@@ -204,6 +210,30 @@ class Game
                 $fleet->setGame(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getGameState(): ?string
+    {
+        return $this->gameState;
+    }
+
+    public function setGameState(string $gameState): self
+    {
+        $this->gameState = $gameState;
+
+        return $this;
+    }
+
+    public function getFleetDimension(): ?int
+    {
+        return $this->fleetDimension;
+    }
+
+    public function setFleetDimension(?int $fleetDimension): self
+    {
+        $this->fleetDimension = $fleetDimension;
 
         return $this;
     }

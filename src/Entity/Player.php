@@ -23,14 +23,6 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
  * exclusion = @Hateoas\Exclusion(groups = "getPlayer")
  * ),
  * @Hateoas\Relation(
- * "game",
- * href = @Hateoas\Route(
- * "game.get",absolute = true,
- * parameters = { "idGame" = "expr(object.getGame().getId())" },
- * ),
- * exclusion = @Hateoas\Exclusion(groups = "getPlayer")
- * ),
- * @Hateoas\Relation(
  * "up",
  * href = "http://127.0.0.1:8000/api/player/",
  * exclusion = @Hateoas\Exclusion(groups = "getPlayer")
@@ -46,7 +38,7 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
  * "update",
  * href = @Hateoas\Route(
  * "player.edit",absolute = true,
- * parameters = { "idPlayer" = "expr(object.getGame().getId())" },
+ * parameters = { "idPlayer" = "expr(object.getId())" },
  * ),
  * exclusion = @Hateoas\Exclusion(groups = "getPlayer")
  * ),
@@ -55,7 +47,7 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
  * "remove",
  * href = @Hateoas\Route(
  * "player.delete",absolute = true,
- * parameters = { "idPlayer" = "expr(object.getGame().getId())" },
+ * parameters = { "idPlayer" = "expr(object.getId())" },
  * ),
  * exclusion = @Hateoas\Exclusion(groups = "getPlayer")
  * ),
@@ -89,15 +81,16 @@ class Player implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 255, nullable: true)]
     #[Groups(['getGame', 'getPlayer'])]
     private ?string $imagePath;
-
     #[ORM\ManyToOne(inversedBy: 'players')]
     private ?Game $game = null;
 
     #[ORM\Column]
     private ?bool $status = null;
 
+
     public function __construct()
     {
+        $this->boats = new ArrayCollection();
     }
 
 
