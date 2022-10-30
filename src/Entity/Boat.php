@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Repository\BoatRepository;
 use Doctrine\ORM\Mapping as ORM;
+use JMS\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: BoatRepository::class)]
 class Boat
@@ -11,14 +12,14 @@ class Boat
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['getGame'])]
     private ?int $id = null;
-
+    #[Groups(['getGame'])]
     #[ORM\Column(nullable: true)]
     private ?int $posX = null;
-
+    #[Groups(['getGame'])]
     #[ORM\Column(nullable: true)]
     private ?int $posY = null;
-
     #[ORM\ManyToOne(inversedBy: 'boats')]
     private ?Fleet $fleet = null;
 

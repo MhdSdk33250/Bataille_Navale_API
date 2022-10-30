@@ -77,7 +77,7 @@ class Game
     private ?string $gameCode = null;
     #[Groups(['getGame'])]
     #[ORM\Column(nullable: true)]
-    private ?int $numberOfBoats = null;
+    private ?int $numberOfBoats = 3;
     #[Groups(['getGame'])]
     #[ORM\OneToMany(mappedBy: 'game', targetEntity: Player::class)]
     private Collection $players;
@@ -92,7 +92,7 @@ class Game
     private ?string $gameState = "Standby";
     #[Groups(['getGame'])]
     #[ORM\Column(nullable: true)]
-    private ?int $fleetDimension = null;
+    private ?int $fleetDimension = 10;
 
 
     public function __construct()

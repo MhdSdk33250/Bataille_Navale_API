@@ -19,13 +19,10 @@ class Fleet
     #[Groups(['getGame'])]
     #[ORM\Column]
     private ?bool $status = null;
-    #[Groups(['getGame'])]
-    #[ORM\Column]
-    private ?int $fleetDimensions = null;
 
     #[ORM\ManyToOne(inversedBy: 'Fleet')]
     private ?Game $game = null;
-
+    #[Groups(['getGame'])]
     #[ORM\OneToMany(mappedBy: 'fleet', targetEntity: Boat::class)]
     private Collection $boats;
 
@@ -47,18 +44,6 @@ class Fleet
     public function setStatus(bool $status): self
     {
         $this->status = $status;
-
-        return $this;
-    }
-
-    public function getFleetDimensions(): ?int
-    {
-        return $this->fleetDimensions;
-    }
-
-    public function setFleetDimensions(int $fleetDimensions): self
-    {
-        $this->fleetDimensions = $fleetDimensions;
 
         return $this;
     }
