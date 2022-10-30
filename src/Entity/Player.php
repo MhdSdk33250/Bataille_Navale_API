@@ -87,6 +87,9 @@ class Player implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private ?bool $status = null;
 
+    #[ORM\OneToOne(cascade: ['persist', 'remove'])]
+    private ?Fleet $fleet = null;
+
 
     public function __construct()
     {
@@ -207,6 +210,18 @@ class Player implements UserInterface, PasswordAuthenticatedUserInterface
     public function setStatus(bool $status): self
     {
         $this->status = $status;
+
+        return $this;
+    }
+
+    public function getFleet(): ?Fleet
+    {
+        return $this->fleet;
+    }
+
+    public function setFleet(?Fleet $fleet): self
+    {
+        $this->fleet = $fleet;
 
         return $this;
     }
