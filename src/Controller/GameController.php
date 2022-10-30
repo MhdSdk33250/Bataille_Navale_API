@@ -31,7 +31,13 @@ class GameController extends AbstractController
         $this->playerRepository = $doctrine->getRepository(Player::class);
         $this->gameService = $gameService;
     }
-
+    /**
+     * Return state of the game
+     *
+     * Return the current state of the game between 'standby', 'placing', 'started' and 'ended'
+     * @OA\Tag(name="Game routes")
+     * @Security(name="Bearer")
+     */
     #[Route('/api/game/gamestate', name: 'game.state', methods: ['GET'])]
     public function getCurrentGameState(): JsonResponse
     {
@@ -48,7 +54,13 @@ class GameController extends AbstractController
         }
     }
 
-
+    /**
+     * Return current game
+     *
+     * Return the game you are currently in
+     * @OA\Tag(name="Game routes")
+     * @Security(name="Bearer")
+     */
     #[Route('/api/game/current', name: 'game.current', methods: ['GET'])]
     public function getCurrentGame(SerializerInterface $serializer): JsonResponse
     {
