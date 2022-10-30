@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\FleetRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use JMS\Serializer\Annotation\Groups;
 
@@ -19,13 +21,18 @@ class Fleet
     private ?bool $status = null;
     #[Groups(['getGame'])]
     #[ORM\Column]
-    private ?int $fleetDimensionX = null;
-    #[Groups(['getGame'])]
-    #[ORM\Column]
-    private ?int $fleetDimensionY = null;
+    private ?int $fleetDimensions = null;
 
     #[ORM\ManyToOne(inversedBy: 'Fleet')]
     private ?Game $game = null;
+
+    #[ORM\OneToMany(mappedBy: 'fleet', targetEntity: Boat::class)]
+    private Collection $boats;
+
+    public function __construct()
+    {
+        $this->boats = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -44,29 +51,18 @@ class Fleet
         return $this;
     }
 
-    public function getFleetDimensionX(): ?int
+    public function getFleetDimensions(): ?int
     {
-        return $this->fleetDimensionX;
+        return $this->fleetDimensions;
     }
 
-    public function setFleetDimensionX(int $fleetDimensionX): self
+    public function setFleetDimensions(int $fleetDimensions): self
     {
-        $this->fleetDimensionX = $fleetDimensionX;
+        $this->fleetDimensions = $fleetDimensions;
 
         return $this;
     }
 
-    public function getFleetDimensionY(): ?int
-    {
-        return $this->fleetDimensionY;
-    }
-
-    public function setFleetDimensionY(int $fleetDimensionY): self
-    {
-        $this->fleetDimensionY = $fleetDimensionY;
-
-        return $this;
-    }
 
     public function getGame(): ?Game
     {
@@ -76,6 +72,36 @@ class Fleet
     public function setGame(?Game $game): self
     {
         $this->game = $game;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Boat>
+     */
+    public function getBoats(): Collection
+    {
+        return $this->boats;
+    }
+
+    public function addBoat(Boat $boat): self
+    {
+        if (!$this->boats->contains($boat)) {
+            $this->boats->add($boat);
+            $boat->setFleet($this);
+        }
+
+        return $this;
+    }
+
+    public function removeBoat(Boat $boat): self
+    {
+        if ($this->boats->removeElement($boat)) {
+            // set the owning side to null (unless already changed)
+            if ($boat->getFleet() === $this) {
+                $boat->setFleet(null);
+            }
+        }
 
         return $this;
     }

@@ -2,10 +2,14 @@
 
 namespace App\Controller;
 
+use OA\Tag;
 use App\Entity\Player;
 use App\Service\UploadService;
+use JMS\Serializer\Serializer;
 use App\Repository\PlayerRepository;
+use JMS\Serializer\SerializerInterface;
 use Doctrine\ORM\EntityManagerInterface;
+use JMS\Serializer\SerializationContext;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -21,9 +25,9 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
-use JMS\Serializer\SerializerInterface;
-use JMS\Serializer\Serializer;
-use JMS\Serializer\SerializationContext;
+use Nelmio\ApiDocBundle\Annotation\Security;
+use OpenApi\Annotations as OA;
+use OA\RequestBody;
 
 class PlayerController extends AbstractController
 {
@@ -36,7 +40,27 @@ class PlayerController extends AbstractController
         $this->playerRepository = $doctrine->getRepository(Player::class);
     }
     /**
-     * Get all players
+     * Get current player
+     *
+     * Return your user object
+     * @OA\Tag(name="Player routes")
+     * @Security(name="Bearer")
+     */
+    #[Route('/api/player/current', name: 'player.current', methods: ['GET'])]
+    public function getCurrentPlayer(SerializerInterface $serializer): JsonResponse
+    {
+        $playerId = $this->getUser()->getId();
+        $player = $this->playerRepository->find($playerId);
+        $context = SerializationContext::create()->setGroups(['getPlayer']);
+        $jsonPlayer = $serializer->serialize($player, 'json', $context);
+        return new JsonResponse($jsonPlayer, Response::HTTP_OK, ['accept' => 'json'], true);
+    }
+    /**
+     * Get players
+     *
+     * Return all the players
+     * @OA\Tag(name="Player routes")
+     * @Security(name="Bearer")
      */
     #[Route('/api/players', name: 'get.players', methods: ['GET'])]
     public function getPlayers(SerializerInterface $serializer): JsonResponse
@@ -50,13 +74,16 @@ class PlayerController extends AbstractController
         return new JsonResponse($jsonPlayers, Response::HTTP_OK, ['accept' => 'json'], true);
     }
     /**
-     * Get player found by id
+     * Find player by id
+     *
+     * Return the player with the corresponding id
+     * @OA\Tag(name="Player routes")
+     * @Security(name="Bearer")
      */
     #[Route('/api/player/{idPlayer}', name: 'player.get', methods: ['GET'])]
     #[ParamConverter("player", options: ["id" => "idPlayer"], class: 'App\Entity\Player')]
     public function player(Player $player, SerializerInterface $serializer): JsonResponse
     {
-        // player if status true
         if ($player->isStatus()) {
             $context = SerializationContext::create()->setGroups(['getPlayer']);
             $jsonPlayer = $serializer->serialize($player, 'json', $context);
@@ -65,6 +92,10 @@ class PlayerController extends AbstractController
     }
     /**
      * Delete player by id
+     *
+     * Set
+     * @OA\Tag(name="Player routes")
+     * @Security(name="Bearer")
      */
     #[Route('/api/player/{idPlayer}', name: 'player.delete', methods: ['DELETE'])]
     #[ParamConverter("Player", options: ["id" => "idPlayer"], class: 'App\Entity\Player')]
@@ -78,7 +109,11 @@ class PlayerController extends AbstractController
         return new JsonResponse($jsonResponse, Response::HTTP_NO_CONTENT);
     }
     /**
-     * Edit player by id
+     * Update player by id
+     *
+     * Simply update the player with the corresponding id
+     * @OA\Tag(name="Player routes")
+     * @Security(name="Bearer")
      */
     #[Route('/api/player/{idPlayer}', name: 'player.edit', methods: ['PATCH'])]
     #[ParamConverter("Player", options: ["id" => "idPlayer"], class: 'App\Entity\Player')]
@@ -95,7 +130,19 @@ class PlayerController extends AbstractController
         return new JsonResponse($jsonPlayer, Response::HTTP_CREATED, ["Location" => $location], true);
     }
     /**
-     * Register new player
+     * Register a new player
+     *
+     * Return your user object
+     * @OA\RequestBody(
+     *     required=true,
+     *     @OA\JsonContent(
+     *         example={
+     *             "username": "newuser",
+     *             "password": "pwd"
+     *         }
+     *     )
+     * )
+     * @OA\Tag(name="Login")
      */
     #[Route('/api/register', name: 'player.create', methods: ['POST'])]
     public function createPlayer(Request $request, SerializerInterface $serializer, UrlGeneratorInterface $urlGenerator, UserPasswordHasherInterface $passwordHasher): JsonResponse
@@ -103,10 +150,6 @@ class PlayerController extends AbstractController
 
         $player = $serializer->deserialize($request->getContent(), Player::class, 'json');
         $plaintextPassword = $player->getPassword();
-        // $errors = $validator->validate($player); // TODO Bryan
-        // if($errors->count() > 0) {
-        //     return new JsonResponse($serializer->serialize($errors,'json'), Response::HTTP_BAD_REQUEST, [], true);
-        // }
         $plaintextPassword = $player->getPassword();
         $hashedPassword = $passwordHasher->hashPassword(
             $player,
@@ -120,12 +163,15 @@ class PlayerController extends AbstractController
             "message" => "User registered",
             "user url" => $urlGenerator->generate('player.get', ['idPlayer' => $player->getId()], UrlGeneratorInterface::ABSOLUTE_URL)
         ]);
-        $jsonPlayer = $serializer->serialize($player, 'json');
         $location = $urlGenerator->generate('player.get', ['idPlayer' => $player->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
         return new JsonResponse($json, Response::HTTP_CREATED, ["Location" => $location], true);
     }
     /**
-     * Upload player profile pic
+     * Upload profile picture
+     *
+     *  Set your profile picture !
+     * @OA\Tag(name="Player routes")
+     * @Security(name="Bearer")
      */
     #[Route('/api/player/uploadpic', name: 'player.uploadpic', methods: ['POST'])]
     public function uploadpic(UploadService $uploader, ManagerRegistry $doctrine, Request $request, SerializerInterface $serializer, UrlGeneratorInterface $urlGenerator, UserPasswordHasherInterface $passwordHasher): JsonResponse
@@ -148,8 +194,15 @@ class PlayerController extends AbstractController
         $location = $urlGenerator->generate('picture', ['idPlayer' => $currentPlayer->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
         return new JsonResponse($jsonResponse, Response::HTTP_CREATED, ["Location" => $location], true);
     }
+
+
+
     /**
-     * Get player profile picture
+     * Get your profile picture
+     *
+     * Return your profile picture
+     * @OA\Tag(name="Player routes")
+     * @Security(name="Bearer")
      */
     #[Route('/api/player/picture/{idPlayer}', name: 'picture', methods: ['GET'])]
     #[ParamConverter("player", options: ["id" => "idPlayer"], class: 'App\Entity\Player')]
