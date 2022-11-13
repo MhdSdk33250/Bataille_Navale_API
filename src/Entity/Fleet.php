@@ -26,9 +26,17 @@ class Fleet
     #[ORM\OneToMany(mappedBy: 'fleet', targetEntity: Boat::class)]
     private Collection $boats;
 
+    #[ORM\Column]
+    #[Groups(['getGame'])]
+    private ?bool $comfirmed = false;
+
+    #[ORM\OneToMany(mappedBy: 'Fleet', targetEntity: Shot::class)]
+    private Collection $shots;
+
     public function __construct()
     {
         $this->boats = new ArrayCollection();
+        $this->shots = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -85,6 +93,48 @@ class Fleet
             // set the owning side to null (unless already changed)
             if ($boat->getFleet() === $this) {
                 $boat->setFleet(null);
+            }
+        }
+
+        return $this;
+    }
+
+    public function isComfirmed(): ?bool
+    {
+        return $this->comfirmed;
+    }
+
+    public function setComfirmed(bool $comfirmed): self
+    {
+        $this->comfirmed = $comfirmed;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Shot>
+     */
+    public function getShots(): Collection
+    {
+        return $this->shots;
+    }
+
+    public function addShot(Shot $shot): self
+    {
+        if (!$this->shots->contains($shot)) {
+            $this->shots->add($shot);
+            $shot->setFleet($this);
+        }
+
+        return $this;
+    }
+
+    public function removeShot(Shot $shot): self
+    {
+        if ($this->shots->removeElement($shot)) {
+            // set the owning side to null (unless already changed)
+            if ($shot->getFleet() === $this) {
+                $shot->setFleet(null);
             }
         }
 

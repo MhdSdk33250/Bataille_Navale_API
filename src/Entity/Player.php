@@ -65,9 +65,8 @@ class Player implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 180, unique: true)]
     #[Groups(['getGame', 'getPlayer'])]
     private ?string $username = null;
-    #[ORM\Column]
-    #[Groups(['getGame', 'getPlayer'])]
-    private array $roles = [];
+    #[ORM\Column(nullable: true)]
+    private ?array $roles = [];
     /**
      * @var string The hashed password
      */
@@ -86,7 +85,7 @@ class Player implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column]
     private ?bool $status = null;
-
+    #[Groups(['getGame', 'getPlayer'])]
     #[ORM\OneToOne(cascade: ['persist', 'remove'])]
     private ?Fleet $fleet = null;
 

@@ -23,6 +23,10 @@ class Boat
     #[ORM\ManyToOne(inversedBy: 'boats')]
     private ?Fleet $fleet = null;
 
+    #[ORM\Column]
+    #[Groups(['getGame'])]
+    private ?bool $status = true;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -60,6 +64,18 @@ class Boat
     public function setFleet(?Fleet $fleet): self
     {
         $this->fleet = $fleet;
+
+        return $this;
+    }
+
+    public function getStatus(): ?bool
+    {
+        return $this->status;
+    }
+
+    public function setStatus(bool $status): self
+    {
+        $this->status = $status;
 
         return $this;
     }

@@ -15,6 +15,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use JMS\Serializer\SerializerInterface;
 use JMS\Serializer\Serializer;
 use JMS\Serializer\SerializationContext;
+use JMS\Serializer\DeserializationContext;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
@@ -30,6 +31,48 @@ class GameController extends AbstractController
         $this->gameRepository = $doctrine->getRepository(Game::class);
         $this->playerRepository = $doctrine->getRepository(Player::class);
         $this->gameService = $gameService;
+    }
+    // route to get current game turn
+    #[Route('/api/game/turn', name: 'game.turn', methods: ['GET'])]
+    /**
+     * Get current turn
+     *
+     * Get the current turn of the game you are currently in
+     *
+     * @OA\Tag(name="Game routes")
+     * @Security(name="Bearer")
+     */
+    public function getTurn(UrlGeneratorInterface $urlGenerator, ManagerRegistry $doctrine): JsonResponse
+    {
+        $playerId = $this->getUser()->getId();
+        $playerRepository = $doctrine->getRepository(Player::class);
+        $currentPlayer = $playerRepository->find($playerId);
+        $game = $currentPlayer->getGame();
+        if ($game === null) {
+            return new JsonResponse($this->json([
+                'message' => 'You are not in a game, to join a game use the following url',
+                "url" => $urlGenerator->generate('game.join', ["codeGame" => "ex : 12345"], UrlGeneratorInterface::ABSOLUTE_URL)
+            ]), Response::HTTP_NOT_FOUND, ['accept' => 'json'], true);
+        }
+        // if game is not started
+        if ($game->getGameState() === "not started") {
+            return new JsonResponse($this->json([
+                'message' => 'The game has not started yet, to start the game use the following url',
+                "url" => $urlGenerator->generate('game.start', ["codeGame" => $game->getCodeGame()], UrlGeneratorInterface::ABSOLUTE_URL)
+            ]), Response::HTTP_NOT_FOUND, ['accept' => 'json'], true);
+        }
+        // get current game wichturn
+        $turn = $game->getWichTurn();
+        // if turn is current player id return it is your turn
+        if ($turn === $playerId) {
+            return new JsonResponse($this->json([
+                'message' => "It's your turn",
+            ]), Response::HTTP_OK, ['accept' => 'json'], true);
+        } else {
+            return new JsonResponse($this->json([
+                'message' => "It's not your turn",
+            ]), Response::HTTP_OK, ['accept' => 'json'], true);
+        }
     }
     /**
      * Return state of the game
@@ -53,7 +96,6 @@ class GameController extends AbstractController
             return new JsonResponse('No game found', Response::HTTP_NOT_FOUND, ['accept' => 'json'], true);
         }
     }
-
     /**
      * Return current game
      *
@@ -75,7 +117,6 @@ class GameController extends AbstractController
             return new JsonResponse('No game found', Response::HTTP_NOT_FOUND, ['accept' => 'json'], true);
         }
     }
-
     /**
      * Return specified game
      *
@@ -85,15 +126,31 @@ class GameController extends AbstractController
      * @Security(name="Bearer")
      */
     #[Route('api/game/{idGame}', name: 'game.get', methods: ['GET'])]
-    #[ParamConverter("game", options: ["id" => "idGame"], class: 'App\Entity\Game')]
-    public function getGame(Game $game, SerializerInterface $serializer): JsonResponse
+    public function getGame($idGame, SerializerInterface $serializer): JsonResponse
     {
+        $game = $this->gameRepository->find($idGame);
+        if (!$game) {
+            return new JsonResponse('No game found', Response::HTTP_NOT_FOUND, ['accept' => 'json'], true);
+        }
         if ($game->isStatus()) {
             $context = SerializationContext::create()->setGroups(['getGame']);
             $jsonGame = $serializer->serialize($game, 'json', $context);
             return new JsonResponse($jsonGame, Response::HTTP_OK, ['accept' => 'json'], true);
         }
         return new JsonResponse($this->json(['message' => 'Game not found']), Response::HTTP_NOT_FOUND, ['accept' => 'json'], true);
+    }
+    #[Route('/api/game/init', name: 'game.init', methods: ['POST'])]
+    public function initGame(SerializerInterface $serializer): JsonResponse
+    {
+        $player = $this->getUser();
+        $game = $player->getGame();
+        $this->gameService->initGame($game);
+
+        $context = SerializationContext::create()->setGroups(['getGame']);
+
+
+        $json = $serializer->serialize(['message' => 'Game initialized', "game" => $game], 'json', $context);
+        return new JsonResponse($json, Response::HTTP_OK, ['accept' => 'json'], true);
     }
     /**
      * Return filtered list of game
@@ -194,12 +251,6 @@ class GameController extends AbstractController
         $playerRepository = $doctrine->getRepository(Player::class);
         $currentPlayer = $playerRepository->find($playerId);
         $game->addPlayer($currentPlayer);
-        if (count($game->getPlayers()) == 2) {
-            $this->gameService->placeBoats($game);
-        }
-
-
-
         $this->em->persist($game);
         $this->em->flush();
         $context = SerializationContext::create()->setGroups(['getGame']);
@@ -211,6 +262,7 @@ class GameController extends AbstractController
         $location = $urlGenerator->generate('game.get', ['idGame' => $game->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
         return new JsonResponse($json, Response::HTTP_CREATED, ["Location" => $location], true);
     }
+
     #[Route('/api/game/leave', name: 'game.leave', methods: ['POST'])]
     /**
      * Leave game
@@ -233,6 +285,7 @@ class GameController extends AbstractController
         if ($game->getPlayers()->isEmpty()) {
             $game->setStatus(false);
         }
+        $currentPlayer->setFleet(null);
         $this->em->flush();
         $context = SerializationContext::create()->setGroups(['getGame']);
         $json = $this->json([
@@ -279,8 +332,67 @@ class GameController extends AbstractController
         $game->setNumberOfBoats($parameters['numberOfBoats']  ?? 3);
         $game->setFleetDimension($parameters['fleetDimensions'] ?? 10);
         $context = SerializationContext::create()->setGroups(['getGame']);
+        $this->em->persist($game);
+        $this->em->flush();
         $jsonGame = $serializer->serialize($game, 'json', $context);
         $location = $urlGenerator->generate('game.get', ['idGame' => $game->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
         return new JsonResponse($jsonGame, Response::HTTP_CREATED, ["Location" => $location], true);
+    }
+    #[Route('/api/game/start', name: 'game.start', methods: ['POST'])]
+    /**
+     * Start game
+     *
+     * Start the game you are currently in
+     *
+     * @OA\Tag(name="Game routes")
+     * @Security(name="Bearer")
+     */
+    public function startGame(SerializerInterface $serializer, UrlGeneratorInterface $urlGenerator, ManagerRegistry $doctrine): JsonResponse
+    {
+
+        $playerId = $this->getUser()->getId();
+        $playerRepository = $doctrine->getRepository(Player::class);
+        $currentPlayer = $playerRepository->find($playerId);
+        $game = $currentPlayer->getGame();
+        if ($game->getGameState() === "playing") {
+            // create json game is already started
+            return $this->json([
+                'message' => 'Game already started',
+                "game url" => $urlGenerator->generate('game.get', ['idGame' => $game->getId()], UrlGeneratorInterface::ABSOLUTE_URL)
+            ]);
+        }
+        if ($game === null) {
+            return new JsonResponse($this->json([
+                'message' => 'You are not in a game, to join a game use the following url',
+                "url" => $urlGenerator->generate('game.join', ["codeGame" => "ex : 12345"], UrlGeneratorInterface::ABSOLUTE_URL)
+            ]), Response::HTTP_NOT_FOUND, ['accept' => 'json'], true);
+        }
+        if ($game->getPlayers()->count() < 2) {
+            return new JsonResponse($this->json([
+                'message' => 'You need at least 2 players to start a game',
+                "url" => $urlGenerator->generate('game.join', ["codeGame" => "ex : 12345"], UrlGeneratorInterface::ABSOLUTE_URL)
+            ]), Response::HTTP_BAD_REQUEST, ['accept' => 'json'], true);
+        }
+        $players = $game->getPlayers();
+        foreach ($players as $player) {
+            if ($player->getFleet() === null) {
+                return new JsonResponse($this->json([
+                    'message' => 'You need to init the game before starting it',
+                ]), Response::HTTP_BAD_REQUEST, ['accept' => 'json'], true);
+            } else {
+                if ($player->getFleet()->isComfirmed() === false) {
+                    return new JsonResponse($this->json([
+                        'message' => 'You need to comfirm all the fleets before starting the game',
+                    ]), Response::HTTP_BAD_REQUEST, ['accept' => 'json'], true);
+                }
+            }
+        }
+        $this->gameService->startGame($game);
+        $json = $this->json([
+            'message' => 'Game successfully started',
+            "game" => $urlGenerator->generate('game.get', ['idGame' => $game->getId()], UrlGeneratorInterface::ABSOLUTE_URL)
+        ]);
+        $location = $urlGenerator->generate('game.get', ['idGame' => $game->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
+        return new JsonResponse($json, Response::HTTP_CREATED, ["Location" => $location], true);
     }
 }
