@@ -10,6 +10,7 @@ use JMS\Serializer\SerializationContext;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
 class FleetController extends AbstractController
@@ -29,5 +30,16 @@ class FleetController extends AbstractController
         $context = SerializationContext::create()->setGroups(['getGame']);
         $data = $serializer->serialize($fleet, 'json', $context);
         return new JsonResponse($data, 200, [], true);
+    }
+
+    #[Route('/api/fleet/comfirm', name: 'fleet.confirm', methods: ['POST'])]
+    public function confirmFleet(): JsonResponse
+    {
+        $fleet = $this->getUser()->getFleet();
+        $fleet->setComfirmed(true);
+        $this->em->persist($fleet);
+        $this->em->flush();
+        $json = $this->json(['Message' => "Fleet comfirmed"], 200);
+        return new JsonResponse($json, Response::HTTP_OK, ['accept' => 'json'], true);
     }
 }

@@ -84,21 +84,24 @@ class Game
 
     #[ORM\Column]
     private ?\DateTimeImmutable $createdAt = null;
-    #[Groups(['getGame'])]
-    #[ORM\OneToMany(mappedBy: 'game', targetEntity: Fleet::class)]
-    private Collection $fleet;
+
 
     #[ORM\Column(length: 255)]
     private ?string $gameState = "Standby";
     #[Groups(['getGame'])]
     #[ORM\Column(nullable: true)]
     private ?int $fleetDimension = 10;
+    #[Groups(['getGame'])]
+    #[ORM\Column]
+    private ?int $wichTurn = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?int $winner = null;
 
 
     public function __construct()
     {
         $this->players = new ArrayCollection();
-        $this->fleet = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -184,35 +187,6 @@ class Game
         return $this;
     }
 
-    /**
-     * @return Collection<int, fleet>
-     */
-    public function getFleet(): Collection
-    {
-        return $this->fleet;
-    }
-
-    public function addFleet(fleet $fleet): self
-    {
-        if (!$this->fleet->contains($fleet)) {
-            $this->fleet->add($fleet);
-            $fleet->setGame($this);
-        }
-
-        return $this;
-    }
-
-    public function removeFleet(fleet $fleet): self
-    {
-        if ($this->fleet->removeElement($fleet)) {
-            // set the owning side to null (unless already changed)
-            if ($fleet->getGame() === $this) {
-                $fleet->setGame(null);
-            }
-        }
-
-        return $this;
-    }
 
     public function getGameState(): ?string
     {
@@ -234,6 +208,30 @@ class Game
     public function setFleetDimension(?int $fleetDimension): self
     {
         $this->fleetDimension = $fleetDimension;
+
+        return $this;
+    }
+
+    public function getWichTurn(): ?int
+    {
+        return $this->wichTurn;
+    }
+
+    public function setWichTurn(int $wichTurn): self
+    {
+        $this->wichTurn = $wichTurn;
+
+        return $this;
+    }
+
+    public function getWinner(): ?int
+    {
+        return $this->winner;
+    }
+
+    public function setWinner(?int $winner): self
+    {
+        $this->winner = $winner;
 
         return $this;
     }
