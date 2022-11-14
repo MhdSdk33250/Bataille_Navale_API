@@ -14,6 +14,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
@@ -27,6 +28,30 @@ class ShotController extends AbstractController
         $this->playerRepository = $doctrine->getRepository(Player::class);
         $this->shotRepository = $doctrine->getRepository(Shot::class);
         $this->gameService = $gameService;
+    }
+    // route to get all shots
+    /**
+     * @Route("/api/shots", name="get_shots", methods={"GET"})
+     * @Tag(name="Shots")
+     * @Security(name="Bearer")
+     */
+    public function getShots(SerializerInterface $serializer)
+    {
+        $playerId = $this->getUser()->getId();
+        $playerRepository = $this->playerRepository;
+        $currentPlayer = $playerRepository->find($playerId);
+        // get game
+        $game = $currentPlayer->getGame();
+        // get oponent from game service
+        $oponent = $this->gameService->getOpponent($currentPlayer);
+        // get oponent fleet
+        $oponentFleet = $oponent->getFleet();
+        // get shots
+        $shots = $oponentFleet->getShots();
+        // serialize shots
+        $jsonShots = $serializer->serialize($shots, 'json', ['groups' => 'shot']);
+        // return response
+        return new Response($jsonShots, 200, ['Content-Type' => 'application/json']);
     }
     /**
      * Create a new game with a random key to join
