@@ -92,7 +92,7 @@ class Game
     #[ORM\Column(nullable: true)]
     private ?int $fleetDimension = 10;
     #[Groups(['getGame'])]
-    #[ORM\Column]
+    #[ORM\Column(nullable: true)]
     private ?int $wichTurn = null;
 
     #[ORM\Column(nullable: true)]
