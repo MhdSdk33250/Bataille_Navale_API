@@ -13,7 +13,8 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Nelmio\ApiDocBundle\Annotation\Security;
 use OpenApi\Annotations as OA;
-
+use OA\ResquestBody;
+use OA\ResponseBody;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
 class FleetController extends AbstractController
@@ -26,10 +27,43 @@ class FleetController extends AbstractController
         $this->gameService = $gameService;
     }
 
-    /**
-     * route to get fleet
-     * @OA\Tag(name="Fleet routes")
+    /** 
      * @Security(name="Bearer")
+     * @OA\Response(
+     *    response=200,
+     *    description="route to get fleet",
+     *    @OA\JsonContent(
+     *      example={
+     *        "id": "int",
+     *        "status": "bool",
+     *        "boats" : 
+     *           {
+     *              {
+     *              "boatId": "int",
+     *              "posX": "int",
+     *              "posY": "int",
+     *              "status":"bool"
+     *              },
+     *              {
+     *              "boatId": "int",
+     *              "posX": "int",
+     *              "posY": "int",
+     *              "status":"bool"
+     *              },
+     *              {
+     *              "boatId": "int",
+     *              "posX": "int",
+     *              "posY": "int",
+     *              "status":"bool"
+     *              },
+     *          
+     *           },
+     *          "comfirmed": "bool"
+     *         }
+     * 
+     *   )
+     * )
+     * @OA\Tag(name="Fleet routes")
      */
     #[Route('/api/fleet', name: 'fleet.get', methods: ['GET'])]
     public function getFleet(SerializerInterface $serializer): JsonResponse
