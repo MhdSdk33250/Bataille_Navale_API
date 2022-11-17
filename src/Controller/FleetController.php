@@ -11,6 +11,9 @@ use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
+use Nelmio\ApiDocBundle\Annotation\Security;
+use OpenApi\Annotations as OA;
+
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
 class FleetController extends AbstractController
@@ -23,6 +26,11 @@ class FleetController extends AbstractController
         $this->gameService = $gameService;
     }
 
+    /**
+     * route to get fleet
+     * @OA\Tag(name="Fleet routes")
+     * @Security(name="Bearer")
+     */
     #[Route('/api/fleet', name: 'fleet.get', methods: ['GET'])]
     public function getFleet(SerializerInterface $serializer): JsonResponse
     {
@@ -32,6 +40,11 @@ class FleetController extends AbstractController
         return new JsonResponse($data, 200, [], true);
     }
 
+    /**
+     * route to confirm fleet
+     * @OA\Tag(name="Fleet routes")
+     * @Security(name="Bearer")
+     */
     #[Route('/api/fleet/comfirm', name: 'fleet.confirm', methods: ['POST'])]
     public function confirmFleet(): JsonResponse
     {

@@ -139,6 +139,13 @@ class GameController extends AbstractController
         }
         return new JsonResponse($this->json(['message' => 'Game not found']), Response::HTTP_NOT_FOUND, ['accept' => 'json'], true);
     }
+
+     /**
+     * Init a game
+     *
+     * @OA\Tag(name="Game routes")
+     * @Security(name="Bearer")
+     */
     #[Route('/api/game/init', name: 'game.init', methods: ['POST'])]
     public function initGame(SerializerInterface $serializer): JsonResponse
     {

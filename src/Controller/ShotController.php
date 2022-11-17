@@ -29,10 +29,10 @@ class ShotController extends AbstractController
         $this->shotRepository = $doctrine->getRepository(Shot::class);
         $this->gameService = $gameService;
     }
-    // route to get all shots
     /**
+     * route to get all shots
      * @Route("/api/shots", name="get_shots", methods={"GET"})
-     * @Tag(name="Shots")
+     * @Tag(name="Shots routes")
      * @Security(name="Bearer")
      */
     public function getShots(SerializerInterface $serializer)
@@ -54,11 +54,9 @@ class ShotController extends AbstractController
         return new Response($jsonShots, 200, ['Content-Type' => 'application/json']);
     }
     /**
-     * Create a new game with a random key to join
+     * Shot one block of fleet and return if it's a hit or a miss 
      *
-     * Generate a new game and automatically add you as player 1 
-     *
-     * @Tag(name="Game routes")
+     * @Tag(name="Shots routes")
      * @Security(name="Bearer")
      */
     #[Route('/api/shot/hit', name: 'shot.hit', methods: ['POST'])]

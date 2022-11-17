@@ -13,6 +13,9 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
+use Nelmio\ApiDocBundle\Annotation\Security;
+use OpenApi\Annotations as OA;
+use OA\RequestBody;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
 class BoatController extends AbstractController
@@ -26,7 +29,12 @@ class BoatController extends AbstractController
         $this->gameService = $gameService;
     }
 
-    // route to get all boats from current player
+
+    /**
+     * route to get all boats from current player
+     * @OA\Tag(name="Boats routes")
+     * @Security(name="Bearer")
+     */
     #[Route('/api/boats', name: 'boat.get', methods: ['GET'])]
     public function getBoats(SerializerInterface $serializer): JsonResponse
     {
@@ -46,6 +54,21 @@ class BoatController extends AbstractController
         return new JsonResponse($data, 200, [], true);
     }
 
+    /**
+     * route to place a boat from current player
+     * @Security(name="Bearer")
+     * @OA\RequestBody(
+     *    required=true,
+     *    @OA\JsonContent(
+     *      example={
+     *              "boatId": "int",
+     *              "posX": "int",
+     *              "posY": "int"
+     *         }
+     *   )
+     * )
+     * @OA\Tag(name="Boats routes")
+     */
     #[Route('/api/boat/place', name: 'boat.place', methods: ['POST'])]
     public function placeBoat(SerializerInterface $serializer, Request $request): JsonResponse
     {
