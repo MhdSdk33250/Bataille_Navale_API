@@ -3,20 +3,24 @@
 namespace App\Controller;
 
 use OA\Tag;
+use OA\RequestBody;
 use App\Entity\Player;
 use App\Service\UploadService;
 use JMS\Serializer\Serializer;
+use OpenApi\Annotations as OA;
 use App\Repository\PlayerRepository;
 use JMS\Serializer\SerializerInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use JMS\Serializer\SerializationContext;
 use Doctrine\Persistence\ManagerRegistry;
+use Nelmio\ApiDocBundle\Annotation\Security;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
+use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
@@ -25,9 +29,6 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
-use Nelmio\ApiDocBundle\Annotation\Security;
-use OpenApi\Annotations as OA;
-use OA\RequestBody;
 
 class PlayerController extends AbstractController
 {
@@ -49,6 +50,7 @@ class PlayerController extends AbstractController
     #[Route('/api/player/current', name: 'player.current', methods: ['GET'])]
     public function getCurrentPlayer(SerializerInterface $serializer): JsonResponse
     {
+        // find player with his bearer token
         $playerId = $this->getUser()->getId();
         $player = $this->playerRepository->find($playerId);
         $context = SerializationContext::create()->setGroups(['getPlayer']);
