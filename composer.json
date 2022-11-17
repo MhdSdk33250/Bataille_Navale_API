@@ -12,6 +12,7 @@
         "gedmo/doctrine-extensions": "^3.9",
         "lexik/jwt-authentication-bundle": "^2.16",
         "nelmio/api-doc-bundle": "^4.10",
+        "nelmio/cors-bundle": "^2.2",
         "sensio/framework-extra-bundle": "^6.2",
         "symfony-bundles/json-request-bundle": "^4.1",
         "symfony/asset": "6.1.*",
