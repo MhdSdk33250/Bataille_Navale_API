@@ -42,12 +42,13 @@ class GameController extends AbstractController
      * @OA\Tag(name="Game routes")
      * @Security(name="Bearer")
      */
-    public function getTurn(UrlGeneratorInterface $urlGenerator, ManagerRegistry $doctrine): JsonResponse
+    public function getTurn(UrlGeneratorInterface $urlGenerator, SerializerInterface $serializer, ManagerRegistry $doctrine): JsonResponse
     {
         $playerId = $this->getUser()->getId();
         $playerRepository = $doctrine->getRepository(Player::class);
         $currentPlayer = $playerRepository->find($playerId);
         $game = $currentPlayer->getGame();
+
         if ($game === null) {
             return new JsonResponse($this->json([
                 'message' => 'You are not in a game, to join a game use the following url',
@@ -149,8 +150,26 @@ class GameController extends AbstractController
     #[Route('/api/game/init', name: 'game.init', methods: ['POST'])]
     public function initGame(SerializerInterface $serializer): JsonResponse
     {
-        $player = $this->getUser();
+
+        $playerId = $this->getUser()->getId();
+        $player = $this->playerRepository->find($playerId);
         $game = $player->getGame();
+
+        // if player fleet is null
+        if ($player->getFleet() !== null) {
+            // return error
+            return new JsonResponse($this->json(['message' => 'Game already init']), Response::HTTP_NOT_FOUND, ['accept' => 'json'], true);
+        }
+
+
+
+
+        // if game has less than 2 players
+        if (count($game->getPlayers()) < 2) {
+            return new JsonResponse($this->json([
+                'message' => 'You need at least 2 players to init the game',
+            ]), Response::HTTP_BAD_REQUEST, ['accept' => 'json'], true);
+        }
         $this->gameService->initGame($game);
 
         $context = SerializationContext::create()->setGroups(['getGame']);
@@ -248,15 +267,19 @@ class GameController extends AbstractController
     public function joinGame(string $codeGame, SerializerInterface $serializer, UrlGeneratorInterface $urlGenerator, ManagerRegistry $doctrine): JsonResponse
     {
         $game = $this->gameRepository->findOneBy(['gameCode' => $codeGame]);
+        $playerId = $this->getUser()->getId();
+        $playerRepository = $doctrine->getRepository(Player::class);
+        $currentPlayer = $playerRepository->find($playerId);
+        if ($game->getPlayers()->contains($currentPlayer)) {
+            return new JsonResponse("player is in this game", Response::HTTP_OK, ['accept' => 'json'], true);
+        }
         if (!$game) {
             return new JsonResponse($this->json(['message' => 'Game not found']), Response::HTTP_NOT_FOUND, ['accept' => 'json'], true);
         }
         if (count($game->getPlayers()) >= 2) {
             return new JsonResponse($this->json(['message' => 'Game is full']), Response::HTTP_BAD_REQUEST, ['accept' => 'json'], true);
         }
-        $playerId = $this->getUser()->getId();
-        $playerRepository = $doctrine->getRepository(Player::class);
-        $currentPlayer = $playerRepository->find($playerId);
+
         $game->addPlayer($currentPlayer);
         $this->em->persist($game);
         $this->em->flush();

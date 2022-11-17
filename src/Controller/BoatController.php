@@ -38,8 +38,12 @@ class BoatController extends AbstractController
     #[Route('/api/boats', name: 'boat.get', methods: ['GET'])]
     public function getBoats(SerializerInterface $serializer): JsonResponse
     {
-        $fleet = $this->getUser()->getFleet();
+        // get current player fleet
+        $playerId = $this->getUser()->getId();
+        $player = $this->playerRepository->find($playerId);
+        $fleet = $player->getFleet();
         $boats = $fleet->getBoats();
+
         $data = [];
         foreach ($boats as $boat) {
             $data[] = [
