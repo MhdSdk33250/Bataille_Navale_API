@@ -29,12 +29,13 @@ class GameService
         $players = $game->getPlayers();
         $player1 = $players[0];
         $fleet1 = new Fleet();
-
+        $FleetDimension = $game->getFleetDimension();
         $fleet1->setStatus(true);
         for ($i = 0; $i < $numberOfBoats; $i++) {
             $boat = new Boat();
-            $boat->setPosX(0)
-                ->setPosY(0);
+            // set boat posy and posy random within 0 a,d fleetDimension
+            $boat->setPosX(rand(0, $FleetDimension));
+            $boat->setPosY(rand(0, $FleetDimension));
             $fleet1->addBoat($boat);
             $this->em->persist($boat);
         }
@@ -46,8 +47,8 @@ class GameService
         $fleet2->setStatus(true);
         for ($i = 0; $i < $numberOfBoats; $i++) {
             $boat = new Boat();
-            $boat->setPosX(0)
-                ->setPosY(0);
+            $boat->setPosX(rand(0, $FleetDimension));
+            $boat->setPosY(rand(0, $FleetDimension));
             $fleet2->addBoat($boat);
             $this->em->persist($boat);
         }
