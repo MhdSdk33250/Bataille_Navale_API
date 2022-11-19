@@ -50,29 +50,23 @@ class GameController extends AbstractController
         $game = $currentPlayer->getGame();
 
         if ($game === null) {
-            return new JsonResponse($this->json([
-                'message' => 'You are not in a game, to join a game use the following url',
-                "url" => $urlGenerator->generate('game.join', ["codeGame" => "ex : 12345"], UrlGeneratorInterface::ABSOLUTE_URL)
-            ]), Response::HTTP_NOT_FOUND, ['accept' => 'json'], true);
+            // return json with serializer
+            return new JsonResponse($serializer->serialize(['message' => 'You are not in a game'], 'json'), 404, [], true);
         }
         // if game is not started
         if ($game->getGameState() === "not started") {
-            return new JsonResponse($this->json([
-                'message' => 'The game has not started yet, to start the game use the following url',
-                "url" => $urlGenerator->generate('game.start', ["codeGame" => $game->getCodeGame()], UrlGeneratorInterface::ABSOLUTE_URL)
-            ]), Response::HTTP_NOT_FOUND, ['accept' => 'json'], true);
+            // return json with serializer
+            return new JsonResponse($serializer->serialize(['message' => 'Game is not started'], 'json'), 404, [], true);
         }
         // get current game wichturn
         $turn = $game->getWichTurn();
         // if turn is current player id return it is your turn
         if ($turn === $playerId) {
-            return new JsonResponse($this->json([
-                'message' => "It's your turn",
-            ]), Response::HTTP_OK, ['accept' => 'json'], true);
+            // return json with serializer
+            return new JsonResponse($serializer->serialize(['message' => 'It is your turn'], 'json'), 200, [], true);
         } else {
-            return new JsonResponse($this->json([
-                'message' => "It's not your turn",
-            ]), Response::HTTP_OK, ['accept' => 'json'], true);
+            // return json with serializer
+            return new JsonResponse($serializer->serialize(['message' => 'It is not your turn'], 'json'), 200, [], true);
         }
     }
     /**
