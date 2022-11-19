@@ -9,6 +9,7 @@ use App\Entity\Player;
 use App\Service\GameService;
 use OpenApi\Annotations\Tag;
 use Doctrine\Persistence\ManagerRegistry;
+use JMS\Serializer\SerializerInterface as SerializerSerializerInterface;
 use Nelmio\ApiDocBundle\Annotation\Security;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -62,7 +63,7 @@ class ShotController extends AbstractController
      * @Security(name="Bearer")
      */
     #[Route('/api/shot/hit', name: 'shot.hit', methods: ['POST'])]
-    public function shoot(UrlGeneratorInterface $urlGenerator, ManagerRegistry $doctrine, Request $request): JsonResponse
+    public function shoot(UrlGeneratorInterface $urlGenerator, ManagerRegistry $doctrine, Request $request, SerializerSerializerInterface $serializer): JsonResponse
     {
 
 
@@ -82,16 +83,13 @@ class ShotController extends AbstractController
         $game = $currentPlayer->getGame();
         // if game is not started
         if ($game->getGameState() != "playing") {
-            return new JsonResponse([
-                'message' => 'Game is not started yet',
-            ], Response::HTTP_BAD_REQUEST);
+            $response = $serializer->serialize(['message' => 'You are not in a game'], 'json');
+            return new JsonResponse($response, Response::HTTP_BAD_REQUEST);
         }
 
         // if it's not your turn
         if ($game->getWichTurn() != $currentPlayer->getId()) {
-            return new JsonResponse([
-                'message' => 'It\'s not your turn',
-            ], Response::HTTP_BAD_REQUEST);
+            return new JsonResponse($serializer->serialize(['message' => 'It is not your turn'], 'json'), 400, [], true);
         }
 
         // get opponent
@@ -128,11 +126,13 @@ class ShotController extends AbstractController
                         'message' => 'Game is over',
                         'winner' => $winner->getId(),
                     ], Response::HTTP_OK);
+                    // return serialized response
+
                 }
-                dd($winner);
-                return new JsonResponse($this->json([
+                return new JsonResponse($serializer->serialize([
                     'message' => 'Hit !',
-                ]), Response::HTTP_OK, ['accept' => 'json'], true);
+                    'remaining ennemy Boats' => $this->gameService->getRemainingBoatsNumber($opponentFleet),
+                ], 'json'), 200, [], true);
             }
         }
         $shot->setHit(false);
@@ -140,9 +140,7 @@ class ShotController extends AbstractController
         $game->setWichTurn($opponent->getId());
         $this->em->persist($game);
         $this->em->flush();
-        return new JsonResponse($this->json([
-            'message' => 'Missed !',
-            'remaining ennemy Boats' => $this->gameService->getRemainingBoatsNumber($opponentFleet),
-        ]), Response::HTTP_OK, ['accept' => 'json'], true);
+        // return missed
+        return new JsonResponse($serializer->serialize(['message' => 'Missed !', 'remaining ennemy Boats' => $this->gameService->getRemainingBoatsNumber($opponentFleet)], 'json'), 400, [], true);
     }
 }
